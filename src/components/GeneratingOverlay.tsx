@@ -1,12 +1,14 @@
-import { Music, Loader2 } from "lucide-react";
+import { Music, Loader2, Film } from "lucide-react";
 
 const messages = [
+  "Farming new aura... generating goated phonk + video",
   "Drift cooking up a nasty beat...",
-  "Loading the 808s...",
+  "Loading the 808s & matching visuals...",
   "Chopping Memphis samples...",
   "Adding cowbell sauce...",
   "Distorting the bass...",
-  "Tuning the vibes...",
+  "Syncing video vibes...",
+  "Cooking something fire...",
 ];
 
 const GeneratingOverlay = () => {
@@ -18,13 +20,16 @@ const GeneratingOverlay = () => {
         <div className="relative mx-auto w-24 h-24">
           <div className="absolute inset-0 rounded-full gradient-phonk animate-pulse-glow" />
           <div className="absolute inset-2 rounded-full bg-background flex items-center justify-center">
-            <Music className="w-8 h-8 text-primary animate-bounce" />
+            <div className="flex items-center gap-1">
+              <Music className="w-6 h-6 text-primary animate-bounce" />
+              <Film className="w-5 h-5 text-secondary animate-bounce" style={{ animationDelay: "0.2s" }} />
+            </div>
           </div>
         </div>
 
         <div className="space-y-2">
-          <h2 className="font-heading text-xl font-bold text-glow-purple">{msg}</h2>
-          <p className="text-sm text-muted-foreground">This usually takes 30-60 seconds</p>
+          <h2 className="font-heading text-lg font-bold text-glow-purple">{msg}</h2>
+          <p className="text-sm text-muted-foreground">Generating your phonk track + matching video...</p>
         </div>
 
         <div className="flex justify-center gap-1">
