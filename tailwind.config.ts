@@ -13,7 +13,17 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        heading: ["Orbitron", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+      },
       colors: {
+        neon: {
+          purple: "hsl(var(--neon-purple))",
+          pink: "hsl(var(--neon-pink))",
+          green: "hsl(var(--neon-green))",
+          blue: "hsl(var(--neon-blue))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
