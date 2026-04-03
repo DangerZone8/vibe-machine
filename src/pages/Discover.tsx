@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Compass } from "lucide-react";
 import TrackCard from "@/components/TrackCard";
 import AudioPlayer from "@/components/AudioPlayer";
-import { DEMO_TRACKS, type GeneratedTrack } from "@/lib/music-api";
+import { DEMO_TRACKS } from "@/lib/demo-tracks";
+import type { GeneratedTrack } from "@/lib/music-api";
 
 const DiscoverPage = () => {
   const [activeTrack, setActiveTrack] = useState<GeneratedTrack | null>(null);
