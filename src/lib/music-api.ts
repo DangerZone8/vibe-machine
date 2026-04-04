@@ -31,10 +31,12 @@ const MOOD_PROMPTS: Record<string, string> = {
 export function buildPrompt(params: GenerationParams): string {
   const moodDesc = MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood;
   const customPart = params.customPrompt ? `, ${params.customPrompt}` : "";
-  const vocalPart = params.vocalChops ? ", chopped vocal samples" : ", instrumental only";
-  const intensityDesc = params.intensity > 7 ? "extremely intense" : params.intensity > 4 ? "moderate energy" : "chill laid-back";
+  const vocalPart = params.vocalChops
+    ? ", chopped and screwed Memphis rap style vocal samples with gritty words, phrases and short rap lines (male or female voice, aggressive or dark tone, allow chopped spoken vocals and hooks)"
+    : ", instrumental only but keep cowbell melody prominent";
+  const intensityDesc = params.intensity > 7 ? "extremely intense and aggressive" : params.intensity > 4 ? "moderate energy with bounce" : "chill laid-back but still heavy bass";
 
-  return `Create a completely original new phonk beat, never heard before, heavy distorted 808 bass, signature phonk cowbell melody, chopped & screwed Memphis-style samples, dark atmospheric pads, ${moodDesc}${customPart}, ${intensityDesc}, ${params.bpm} BPM${vocalPart}, high production quality, no copyright samples, fresh and unique, perfect for YouTube reels and Instagram content`;
+  return `Create a completely original, fresh, never-heard-before heavy phonk track. Heavy distorted slamming 808 bass, prominent loud rhythmic cowbell melody that stands out, punchy kicks, gritty snares, dark lo-fi atmospheric pads, hypnotic repetition and bounce. ${moodDesc}${customPart}. ${intensityDesc}, ${params.bpm} BPM${vocalPart}. High production quality, addictive drift energy, perfect for YouTube videos, Instagram Reels, TikTok car edits and gaming montages. Make it goated and viral-sounding.`;
 }
 
 export function generateTitle(mood: string): string {
