@@ -7,10 +7,7 @@ import MoodSelector from "@/components/MoodSelector";
 import GenerationControls from "@/components/GenerationControls";
 import AudioPlayer from "@/components/AudioPlayer";
 import GeneratingOverlay from "@/components/GeneratingOverlay";
-import VideoBackground from "@/components/VideoBackground";
-import SoundEnableOverlay from "@/components/SoundEnableOverlay";
 import { generateTitle, type GeneratedTrack } from "@/lib/music-api";
-import { getVideoForMood } from "@/lib/video-backgrounds";
 import { DEMO_TRACKS } from "@/lib/demo-tracks";
 import heroBg from "@/assets/hero-bg.jpg";
 
@@ -23,24 +20,11 @@ const HomePage = () => {
   const [vocalChops, setVocalChops] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedTrack, setGeneratedTrack] = useState<GeneratedTrack | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(false);
-
-  const pickVideo = useCallback((moodVal: string, prompt?: string) => {
-    setVideoUrl(getVideoForMood(moodVal, prompt));
-  }, []);
 
   const handleGenerate = async () => {
     setGenerating(true);
-
-    // Pick a matching video for this mood
-    pickVideo(mood, customPrompt);
-
-    // Simulate generation (replace with real API call)
     await new Promise((r) => setTimeout(r, 3000));
 
-    // In demo mode, pick a demo track that matches the mood or fallback
     const demoMatch = DEMO_TRACKS.find((t) => t.mood === mood) || DEMO_TRACKS[0];
 
     const track: GeneratedTrack = {
@@ -56,63 +40,32 @@ const HomePage = () => {
 
     setGeneratedTrack(track);
     setGenerating(false);
-    setSoundEnabled(true);
   };
-
-  const handleChangeVideo = () => {
-    pickVideo(mood, customPrompt);
-  };
-
-  const handleEnableSound = () => {
-    setSoundEnabled(true);
-    if (audioElement) {
-      audioElement.play().catch(() => {});
-    }
-  };
-
-  const showVideo = !!generatedTrack && !!videoUrl;
 
   return (
     <div className="pb-24 md:pb-8 relative">
       {generating && <GeneratingOverlay />}
 
-      {/* Video Background — shows when a track is generated */}
-      <VideoBackground
-        videoUrl={videoUrl}
-        mood={generatedTrack?.mood || mood}
-        audioElement={audioElement}
-        active={showVideo}
-      />
-
-      {/* Sound enable overlay */}
-      {generatedTrack && !soundEnabled && (
-        <SoundEnableOverlay onEnable={handleEnableSound} />
-      )}
-
-      {/* Hero (hidden when video is active) */}
-      {!showVideo && (
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0">
-            <img src={heroBg} alt="" className="w-full h-full object-cover opacity-30" width={1920} height={1080} />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
-          </div>
-
-          <div className="relative container mx-auto px-4 pt-16 pb-12 text-center space-y-4">
-            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-black tracking-wider text-glow-purple leading-tight">
-              Turn Your Mood Into<br />
-              <span className="gradient-phonk bg-clip-text text-transparent">Fire Phonk Beats</span>
-            </h1>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              AI-powered phonk generator. Pick a vibe, hit generate, get a fresh beat + matching video.
-              Every track is original and ready for your content.
-            </p>
-          </div>
-        </section>
-      )}
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={heroBg} alt="" className="w-full h-full object-cover opacity-30" width={1920} height={1080} />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
+        </div>
+        <div className="relative container mx-auto px-4 pt-16 pb-12 text-center space-y-4">
+          <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-black tracking-wider text-glow-purple leading-tight">
+            Turn Your Mood Into<br />
+            <span className="gradient-phonk bg-clip-text text-transparent">Fire Phonk Beats</span>
+          </h1>
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            AI-powered phonk generator. Pick a vibe, hit generate, get a fresh beat.
+            Every track is original and ready for your content.
+          </p>
+        </div>
+      </section>
 
       {/* Generator */}
-      <section className={`container mx-auto px-4 space-y-8 relative z-10 ${showVideo ? "pt-8" : "-mt-4"}`}>
-        {/* Mood selector */}
+      <section className="container mx-auto px-4 space-y-8 relative z-10 -mt-4">
         <div className="space-y-4">
           <h2 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
             Select Your Mood
@@ -120,7 +73,6 @@ const HomePage = () => {
           <MoodSelector selected={mood} onSelect={setMood} />
         </div>
 
-        {/* Custom prompt */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <h2 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
@@ -143,7 +95,6 @@ const HomePage = () => {
           />
         </div>
 
-        {/* Controls */}
         <GenerationControls
           bpm={bpm} setBpm={setBpm}
           length={length} setLength={setLength}
@@ -151,7 +102,6 @@ const HomePage = () => {
           vocalChops={vocalChops} setVocalChops={setVocalChops}
         />
 
-        {/* Generate button */}
         <div className="flex justify-center pt-2">
           <Button
             size="lg"
@@ -160,24 +110,20 @@ const HomePage = () => {
             className="gradient-phonk text-primary-foreground font-heading text-sm sm:text-base tracking-wider px-8 sm:px-10 py-6 rounded-xl glow-purple animate-pulse-glow hover:scale-105 transition-transform"
           >
             <Sparkles className="w-5 h-5 mr-2" />
-            Generate New Phonk + Video
+            Generate New Phonk
           </Button>
         </div>
 
-        {/* Result */}
         {generatedTrack && (
           <div className="pt-4">
             <AudioPlayer
               track={generatedTrack}
               onRegenerate={handleGenerate}
-              onChangeVideo={handleChangeVideo}
               onSave={() => {}}
-              onAudioElement={setAudioElement}
             />
           </div>
         )}
 
-        {/* Demo tracks section */}
         {!generatedTrack && (
           <div className="space-y-4 pt-4">
             <h2 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
@@ -191,8 +137,6 @@ const HomePage = () => {
                   onClick={() => {
                     setGeneratedTrack(track);
                     setMood(track.mood);
-                    pickVideo(track.mood);
-                    setSoundEnabled(true);
                   }}
                 >
                   <div className="flex items-center justify-between">
@@ -206,7 +150,7 @@ const HomePage = () => {
                       </span>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground">Tap to play with matching video</p>
+                  <p className="text-xs text-muted-foreground">Tap to play</p>
                 </div>
               ))}
             </div>
