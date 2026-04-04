@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, Download, RotateCcw, Share2, Heart, Volume2, Film } from "lucide-react";
+import { Play, Pause, Download, RotateCcw, Share2, Heart, Volume2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import type { GeneratedTrack } from "@/lib/music-api";
@@ -8,24 +8,24 @@ interface AudioPlayerProps {
   track: GeneratedTrack;
   onRegenerate?: () => void;
   onSave?: () => void;
-  onChangeVideo?: () => void;
-  onAudioElement?: (el: HTMLAudioElement | null) => void;
   compact?: boolean;
 }
 
-const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElement, compact = false }: AudioPlayerProps) => {
+const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlayerProps) => {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(track.duration);
   const [volume, setVolume] = useState(80);
   const [liked, setLiked] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const waveformBars = useRef<number[]>(
-    Array.from({ length: 80 }, (_, i) => 20 + Math.sin(i * 0.3) * 30 + Math.random() * 25)
-  );
 
   useEffect(() => {
-    onAudioElement?.(audioRef.current);
+    setPlaying(false);
+    setProgress(0);
+    setError(null);
+    setLoaded(false);
   }, [track.audioUrl]);
 
   useEffect(() => {
@@ -33,37 +33,44 @@ const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElemen
     if (!audio) return;
 
     const onTimeUpdate = () => {
-      if (audio.duration) {
-        setProgress((audio.currentTime / audio.duration) * 100);
-      }
+      if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100);
     };
     const onLoadedMetadata = () => {
       setDuration(audio.duration || track.duration);
+      setLoaded(true);
+      console.log("Audio loaded:", track.audioUrl, "duration:", audio.duration);
     };
-    const onEnded = () => {
+    const onCanPlay = () => {
+      setLoaded(true);
+      setError(null);
+    };
+    const onEnded = () => { setPlaying(false); setProgress(0); };
+    const onError = () => {
+      const msg = audio.error
+        ? `Audio error (code ${audio.error.code}): ${audio.error.message}`
+        : "Audio failed to load";
+      console.error(msg, track.audioUrl);
+      setError("Audio failed to load — try refreshing the page");
       setPlaying(false);
-      setProgress(0);
-    };
-    const onError = (e: Event) => {
-      console.error("Audio error:", e, audio.error);
     };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
+    audio.addEventListener("canplay", onCanPlay);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("error", onError);
 
     return () => {
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("canplay", onCanPlay);
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
   }, [track]);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) audio.volume = volume / 100;
+    if (audioRef.current) audioRef.current.volume = volume / 100;
   }, [volume]);
 
   const togglePlay = useCallback(() => {
@@ -74,8 +81,13 @@ const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElemen
       audio.pause();
       setPlaying(false);
     } else {
-      audio.play().then(() => setPlaying(true)).catch((e) => {
+      setError(null);
+      audio.play().then(() => {
+        setPlaying(true);
+        console.log("Playback started successfully");
+      }).catch((e) => {
         console.error("Playback failed:", e);
+        setError("Tap the page first to enable sound, then press play again");
       });
     }
   }, [playing]);
@@ -95,12 +107,11 @@ const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElemen
   };
 
   const currentTime = (progress / 100) * duration;
-  const hasAudio = !!track.audioUrl;
 
   if (compact) {
     return (
       <div className="flex items-center gap-3 p-3 rounded-xl glass neon-border">
-        <audio ref={audioRef} src={track.audioUrl} preload="metadata" crossOrigin="anonymous" />
+        <audio ref={audioRef} src={track.audioUrl} preload="auto" />
         <button
           onClick={togglePlay}
           className="w-10 h-10 rounded-full gradient-phonk flex items-center justify-center shrink-0 glow-purple transition-transform hover:scale-105"
@@ -116,16 +127,13 @@ const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElemen
             <span className="text-xs text-muted-foreground">{formatTime(currentTime)}</span>
           </div>
         </div>
-        <button onClick={() => setLiked(!liked)} className="p-1.5">
-          <Heart className={`w-4 h-4 ${liked ? "fill-secondary text-secondary" : "text-muted-foreground"}`} />
-        </button>
       </div>
     );
   }
 
   return (
     <div className="rounded-2xl glass neon-border p-6 space-y-5 animate-slide-up">
-      <audio ref={audioRef} src={track.audioUrl} preload="metadata" crossOrigin="anonymous" />
+      <audio ref={audioRef} src={track.audioUrl} preload="auto" />
 
       <div className="flex items-start justify-between">
         <div>
@@ -145,33 +153,11 @@ const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElemen
         </div>
       </div>
 
-      {/* Waveform visualization */}
-      <div
-        className="relative h-20 flex items-center gap-px cursor-pointer"
-        onClick={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const pct = ((e.clientX - rect.left) / rect.width) * 100;
-          seekTo(pct);
-        }}
-      >
-        {waveformBars.current.map((height, i) => {
-          const filled = (i / 80) * 100 < progress;
-          return (
-            <div
-              key={i}
-              className={`flex-1 rounded-full transition-colors ${filled ? "bg-primary" : "bg-muted-foreground/20"}`}
-              style={{ height: `${height}%` }}
-            />
-          );
-        })}
-        <div
-          className="absolute top-0 bottom-0 w-0.5 bg-primary-foreground shadow-lg"
-          style={{ left: `${progress}%` }}
-        />
-      </div>
-
-      {!hasAudio && (
-        <p className="text-xs text-muted-foreground text-center">Demo mode — connect an API key in Settings for real generation</p>
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {error}
+        </div>
       )}
 
       {/* Controls */}
@@ -207,23 +193,20 @@ const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElemen
         </div>
       </div>
 
+      {!loaded && !error && (
+        <p className="text-xs text-muted-foreground text-center animate-pulse">Loading audio...</p>
+      )}
+
       {/* Action buttons */}
       <div className="flex items-center gap-2 flex-wrap">
-        {hasAudio && (
-          <Button variant="outline" size="sm" className="gap-2 neon-border hover:bg-primary/10" asChild>
-            <a href={track.audioUrl} download={`${track.title}.mp3`} target="_blank" rel="noopener noreferrer">
-              <Download className="w-4 h-4" /> Download MP3
-            </a>
-          </Button>
-        )}
+        <Button variant="outline" size="sm" className="gap-2 neon-border hover:bg-primary/10" asChild>
+          <a href={track.audioUrl} download={`${track.title}.mp3`} target="_blank" rel="noopener noreferrer">
+            <Download className="w-4 h-4" /> Download MP3
+          </a>
+        </Button>
         {onRegenerate && (
           <Button variant="outline" size="sm" onClick={onRegenerate} className="gap-2 neon-border hover:bg-primary/10">
             <RotateCcw className="w-4 h-4" /> Regenerate
-          </Button>
-        )}
-        {onChangeVideo && (
-          <Button variant="outline" size="sm" onClick={onChangeVideo} className="gap-2 neon-border hover:bg-primary/10">
-            <Film className="w-4 h-4" /> Change Video
           </Button>
         )}
         <Button variant="outline" size="sm" className="gap-2 neon-border hover:bg-primary/10">
@@ -238,6 +221,10 @@ const AudioPlayer = ({ track, onRegenerate, onSave, onChangeVideo, onAudioElemen
           <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} /> {liked ? "Saved" : "Save"}
         </Button>
       </div>
+
+      <p className="text-xs text-muted-foreground text-center">
+        Demo mode — connect an API key in Settings for real AI generation
+      </p>
     </div>
   );
 };
