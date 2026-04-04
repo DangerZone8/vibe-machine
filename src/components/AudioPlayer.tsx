@@ -133,7 +133,7 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
 
   return (
     <div className="rounded-2xl glass neon-border p-6 space-y-5 animate-slide-up">
-      <audio ref={audioRef} src={track.audioUrl} preload="auto" />
+      <audio ref={audioRef} src={track.audioUrl} preload="auto" controls className="w-full h-10 rounded-lg mb-2" />
 
       <div className="flex items-start justify-between">
         <div>
