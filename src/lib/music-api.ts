@@ -34,7 +34,7 @@ export function buildPrompt(params: GenerationParams): string {
   const vocalPart = params.vocalChops ? ", chopped vocal samples" : ", instrumental only";
   const intensityDesc = params.intensity > 7 ? "extremely intense" : params.intensity > 4 ? "moderate energy" : "chill laid-back";
 
-  return `Original phonk beat, heavy distorted 808 bass, signature phonk cowbell melody, Memphis rap style, dark atmosphere, ${moodDesc}${customPart}, ${intensityDesc}, ${params.bpm} BPM, ${vocalPart}, high production quality, perfect for reels and content creation`;
+  return `Create a completely original new phonk beat, never heard before, heavy distorted 808 bass, signature phonk cowbell melody, chopped & screwed Memphis-style samples, dark atmospheric pads, ${moodDesc}${customPart}, ${intensityDesc}, ${params.bpm} BPM${vocalPart}, high production quality, no copyright samples, fresh and unique, perfect for YouTube reels and Instagram content`;
 }
 
 export function generateTitle(mood: string): string {
@@ -57,46 +57,4 @@ export function generateTitle(mood: string): string {
   return `${adj} ${suffix} [${moodTag} Phonk]`;
 }
 
-// Demo tracks for Discover page
-export const DEMO_TRACKS: GeneratedTrack[] = [
-  {
-    id: "demo-1",
-    title: "Midnight Drift [Chill Phonk]",
-    mood: "chill",
-    tags: ["chill", "lo-fi", "drift"],
-    audioUrl: "",
-    duration: 120,
-    bpm: 100,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-2",
-    title: "Street Fury [Hype Phonk]",
-    mood: "hype",
-    tags: ["hype", "aggressive", "808"],
-    audioUrl: "",
-    duration: 90,
-    bpm: 140,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-3",
-    title: "Broken Dreams [Sad Phonk]",
-    mood: "sad",
-    tags: ["sad", "emotional", "piano"],
-    audioUrl: "",
-    duration: 150,
-    bpm: 85,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-4",
-    title: "Final Boss [Epic Phonk]",
-    mood: "epic",
-    tags: ["epic", "cinematic", "drift"],
-    audioUrl: "",
-    duration: 110,
-    bpm: 130,
-    createdAt: new Date().toISOString(),
-  },
-];
+// Demo tracks moved to src/lib/demo-tracks.ts
