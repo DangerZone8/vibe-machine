@@ -57,46 +57,4 @@ export function generateTitle(mood: string): string {
   return `${adj} ${suffix} [${moodTag} Phonk]`;
 }
 
-// Demo tracks for Discover page
-export const DEMO_TRACKS: GeneratedTrack[] = [
-  {
-    id: "demo-1",
-    title: "Midnight Drift [Chill Phonk]",
-    mood: "chill",
-    tags: ["chill", "lo-fi", "drift"],
-    audioUrl: "",
-    duration: 120,
-    bpm: 100,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-2",
-    title: "Street Fury [Hype Phonk]",
-    mood: "hype",
-    tags: ["hype", "aggressive", "808"],
-    audioUrl: "",
-    duration: 90,
-    bpm: 140,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-3",
-    title: "Broken Dreams [Sad Phonk]",
-    mood: "sad",
-    tags: ["sad", "emotional", "piano"],
-    audioUrl: "",
-    duration: 150,
-    bpm: 85,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-4",
-    title: "Final Boss [Epic Phonk]",
-    mood: "epic",
-    tags: ["epic", "cinematic", "drift"],
-    audioUrl: "",
-    duration: 110,
-    bpm: 130,
-    createdAt: new Date().toISOString(),
-  },
-];
+// Demo tracks moved to src/lib/demo-tracks.ts

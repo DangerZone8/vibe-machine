@@ -77,6 +77,7 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
     const audio = audioRef.current;
     if (!audio) return;
 
+    console.log("Play attempt — audio src:", audio.src, "readyState:", audio.readyState);
     if (playing) {
       audio.pause();
       setPlaying(false);
@@ -84,10 +85,14 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
       setError(null);
       audio.play().then(() => {
         setPlaying(true);
-        console.log("Playback started successfully");
+        console.log("Playback started successfully for:", audio.src);
       }).catch((e) => {
-        console.error("Playback failed:", e);
-        setError("Tap the page first to enable sound, then press play again");
+        console.error("Playback failed:", e.name, e.message, "src:", audio.src);
+        if (e.name === "NotAllowedError") {
+          setError("Tap the page first to enable sound, then press play again");
+        } else {
+          setError("File not found or corrupted — check the audio URL or Supabase bucket");
+        }
       });
     }
   }, [playing]);
