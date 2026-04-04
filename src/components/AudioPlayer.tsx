@@ -22,10 +22,15 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
+    const audio = audioRef.current;
     setPlaying(false);
     setProgress(0);
     setError(null);
     setLoaded(false);
+    if (audio) {
+      audio.pause();
+      audio.load();
+    }
   }, [track.audioUrl]);
 
   useEffect(() => {
@@ -38,7 +43,7 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
     const onLoadedMetadata = () => {
       setDuration(audio.duration || track.duration);
       setLoaded(true);
-      console.log("Audio loaded:", track.audioUrl, "duration:", audio.duration);
+      console.log("Audio loaded:", audio.currentSrc || track.audioUrl, "duration:", audio.duration);
     };
     const onCanPlay = () => {
       setLoaded(true);
@@ -46,11 +51,12 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
     };
     const onEnded = () => { setPlaying(false); setProgress(0); };
     const onError = () => {
+      const src = audio.currentSrc || audio.src || track.audioUrl;
       const msg = audio.error
         ? `Audio error (code ${audio.error.code}): ${audio.error.message}`
         : "Audio failed to load";
-      console.error(msg, track.audioUrl);
-      setError("Audio failed to load — try refreshing the page");
+      console.error(msg, src);
+      setError("Check Supabase bucket or refresh");
       setPlaying(false);
     };
 
@@ -77,7 +83,7 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
     const audio = audioRef.current;
     if (!audio) return;
 
-    console.log("Play attempt — audio src:", audio.src, "readyState:", audio.readyState);
+    console.log("Play attempt — audio src:", audio.currentSrc || audio.src, "readyState:", audio.readyState);
     if (playing) {
       audio.pause();
       setPlaying(false);
@@ -85,13 +91,13 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
       setError(null);
       audio.play().then(() => {
         setPlaying(true);
-        console.log("Playback started successfully for:", audio.src);
+        console.log("Playback started successfully for:", audio.currentSrc || audio.src);
       }).catch((e) => {
-        console.error("Playback failed:", e.name, e.message, "src:", audio.src);
+        console.error("Playback failed:", e.name, e.message, "src:", audio.currentSrc || audio.src);
         if (e.name === "NotAllowedError") {
-          setError("Tap the page first to enable sound, then press play again");
+          setError("Tap the page first to enable sound, then press play");
         } else {
-          setError("File not found or corrupted — check the audio URL or Supabase bucket");
+          setError("Check Supabase bucket or refresh");
         }
       });
     }
