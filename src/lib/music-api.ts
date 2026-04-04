@@ -34,7 +34,7 @@ export function buildPrompt(params: GenerationParams): string {
   const vocalPart = params.vocalChops ? ", chopped vocal samples" : ", instrumental only";
   const intensityDesc = params.intensity > 7 ? "extremely intense" : params.intensity > 4 ? "moderate energy" : "chill laid-back";
 
-  return `Original phonk beat, heavy distorted 808 bass, signature phonk cowbell melody, Memphis rap style, dark atmosphere, ${moodDesc}${customPart}, ${intensityDesc}, ${params.bpm} BPM, ${vocalPart}, high production quality, perfect for reels and content creation`;
+  return `Create a completely original new phonk beat, never heard before, heavy distorted 808 bass, signature phonk cowbell melody, chopped & screwed Memphis-style samples, dark atmospheric pads, ${moodDesc}${customPart}, ${intensityDesc}, ${params.bpm} BPM${vocalPart}, high production quality, no copyright samples, fresh and unique, perfect for YouTube reels and Instagram content`;
 }
 
 export function generateTitle(mood: string): string {
