@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 
+type VocalType = "male" | "female";
+
 interface GenerationControlsProps {
   bpm: number;
   setBpm: (v: number) => void;
@@ -13,15 +15,13 @@ interface GenerationControlsProps {
   setIntensity: (v: number) => void;
   vocalChops: boolean;
   setVocalChops: (v: boolean) => void;
-  maleVocals: boolean;
-  setMaleVocals: (v: boolean) => void;
-  femaleVocals: boolean;
-  setFemaleVocals: (v: boolean) => void;
+  vocalType: VocalType;
+  setVocalType: (v: VocalType) => void;
 }
 
 const GenerationControls = ({
   bpm, setBpm, length, setLength, intensity, setIntensity, vocalChops, setVocalChops,
-  maleVocals, setMaleVocals, femaleVocals, setFemaleVocals,
+  vocalType, setVocalType,
 }: GenerationControlsProps) => {
   return (
     <div className="space-y-6">
@@ -66,26 +66,36 @@ const GenerationControls = ({
         </div>
       </div>
 
-      {/* Vocals Section */}
+      {/* Vocals Section — exclusive choice */}
       <div className="space-y-3">
         <h3 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
-          🎤 Vocals
+          🎤 Vocals (choose one)
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-            <div className="flex flex-col gap-0.5">
-              <Label className="text-sm font-medium text-foreground">Male Vocals</Label>
-              <span className="text-[11px] text-muted-foreground">Gritty Memphis rap style with words/phrases</span>
-            </div>
-            <Switch checked={maleVocals} onCheckedChange={setMaleVocals} />
-          </div>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-            <div className="flex flex-col gap-0.5">
-              <Label className="text-sm font-medium text-foreground">Female Vocals</Label>
-              <span className="text-[11px] text-muted-foreground">Chopped dark/smooth style with words/phrases</span>
-            </div>
-            <Switch checked={femaleVocals} onCheckedChange={setFemaleVocals} />
-          </div>
+          <button
+            type="button"
+            onClick={() => setVocalType("male")}
+            className={`flex flex-col gap-0.5 p-3 rounded-lg border text-left transition-all ${
+              vocalType === "male"
+                ? "bg-primary/10 border-primary ring-1 ring-primary"
+                : "bg-muted/30 border-border/50"
+            }`}
+          >
+            <Label className="text-sm font-medium text-foreground pointer-events-none">Male Vocals</Label>
+            <span className="text-[11px] text-muted-foreground">Gritty aggressive Memphis rap — short words, phrases or repeated hooks</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setVocalType("female")}
+            className={`flex flex-col gap-0.5 p-3 rounded-lg border text-left transition-all ${
+              vocalType === "female"
+                ? "bg-primary/10 border-primary ring-1 ring-primary"
+                : "bg-muted/30 border-border/50"
+            }`}
+          >
+            <Label className="text-sm font-medium text-foreground pointer-events-none">Female Vocals</Label>
+            <span className="text-[11px] text-muted-foreground">Chopped dark rap — short words, phrases or repeated hooks</span>
+          </button>
         </div>
       </div>
     </div>
