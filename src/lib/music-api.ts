@@ -5,8 +5,7 @@ export interface GenerationParams {
   length: number;
   intensity: number;
   vocalChops: boolean;
-  maleVocals: boolean;
-  femaleVocals: boolean;
+  vocalType: "male" | "female";
 }
 
 export interface GeneratedTrack {
@@ -33,16 +32,11 @@ const MOOD_PROMPTS: Record<string, string> = {
 export function buildPrompt(params: GenerationParams): string {
   const moodDesc = (params.customPrompt?.trim() || MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
 
-  let vocalDirective = "no vocals";
-  if (params.maleVocals && params.femaleVocals) {
-    vocalDirective = "both Male and Female Vocals";
-  } else if (params.maleVocals) {
-    vocalDirective = "Male Vocals only";
-  } else if (params.femaleVocals) {
-    vocalDirective = "Female Vocals only";
-  }
+  const vocalDirective = params.vocalType === "male"
+    ? "Male Vocals — gritty aggressive Memphis rap with only a few short words, phrases or repeated hooks"
+    : "Female Vocals — chopped dark rap with only a few short words, phrases or repeated hooks";
 
-  return `Create a completely original goated heavy phonk track 2026 style, never heard before. Heavy distorted slamming 808 bass, loud prominent rhythmic cowbell melody, chopped & screwed Memphis rap vocal samples WITH gritty real words, phrases, short rap lines and spoken hooks (use ${vocalDirective}). Punchy kicks, gritty snares, dark lo-fi pads, hypnotic bounce. ${moodDesc}. High production, addictive, perfect for reels/drifts/gym/car edits. Make it viral like current top phonk tracks.`;
+  return `Create a completely original, ultra-goated heavy phonk track strongly inspired by https://youtu.be/_QFuWQaJUYs. Exactly ${params.length} seconds long — strictly follow the time limit with perfect structure. Heavy distorted slamming 808 bass with powerful bass-driven sections that hit hard, loud prominent rhythmic cowbell melody that stands out, chopped & screwed Memphis rap vocal samples featuring only a few gritty words, short rap lines, or repeated spoken phrases/hooks (${vocalDirective}). Dramatic pauses before massive banger drops, intense build-ups, punchy kicks, gritty snares, dark lo-fi atmospheric pads, hypnotic repetition and addictive bounce. ${moodDesc}. High production quality, nasty viral drift/reel/gym/car edit energy. Make it heavily goated, instantly shareable, and slap harder than current trending phonk tracks.`;
 }
 
 export function generateTitle(mood: string): string {
