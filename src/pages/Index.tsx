@@ -7,7 +7,7 @@ import MoodSelector from "@/components/MoodSelector";
 import GenerationControls from "@/components/GenerationControls";
 import AudioPlayer from "@/components/AudioPlayer";
 import GeneratingOverlay from "@/components/GeneratingOverlay";
-import { generateTitle, type GeneratedTrack } from "@/lib/music-api";
+import { generateTitle, generateTrackFromAPI, type GeneratedTrack } from "@/lib/music-api";
 import { DEMO_TRACKS } from "@/lib/demo-tracks";
 import heroBg from "@/assets/hero-bg.jpg";
 
@@ -23,16 +23,22 @@ const HomePage = () => {
 
   const handleGenerate = async () => {
     setGenerating(true);
-    await new Promise((r) => setTimeout(r, 3000));
 
+    // Try real API first
+    const apiAudioUrl = await generateTrackFromAPI({
+      mood, customPrompt, bpm, length, intensity, vocalChops,
+    });
+
+    // Fallback to demo if no API key or API failed
     const demoMatch = DEMO_TRACKS.find((t) => t.mood === mood) || DEMO_TRACKS[0];
+    const audioUrl = apiAudioUrl || demoMatch.audioUrl;
 
     const track: GeneratedTrack = {
       id: crypto.randomUUID(),
       title: generateTitle(mood),
       mood,
       tags: [mood, "phonk", intensity > 7 ? "aggressive" : "smooth"],
-      audioUrl: demoMatch.audioUrl,
+      audioUrl,
       duration: length,
       bpm,
       createdAt: new Date().toISOString(),
