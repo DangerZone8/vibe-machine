@@ -2,8 +2,8 @@ export interface GenerationParams {
   mood: string;
   customPrompt?: string;
   bpm: number;
-  length: number; // seconds
-  intensity: number; // 1-10
+  length: number;
+  intensity: number;
   vocalChops: boolean;
 }
 
@@ -31,7 +31,7 @@ const MOOD_PROMPTS: Record<string, string> = {
 export function buildPrompt(params: GenerationParams): string {
   const moodDesc = (params.customPrompt?.trim() || MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
 
-  return `Create a completely original heavy phonk track. Heavy distorted slamming 808 bass, loud rhythmic cowbell melody, chopped & screwed Memphis rap vocal samples with gritty words and short rap lines (male/female), punchy kicks, dark atmosphere. ${moodDesc}. High production, addictive, perfect for reels.`;
+  return `Create a completely original heavy phonk track. Heavy distorted slamming 808 bass, loud prominent cowbell melody, chopped & screwed Memphis rap vocal samples with actual gritty words, phrases, short rap lines or spoken hooks (male or female voice, aggressive/dark tone), punchy kicks, gritty snares, dark lo-fi pads, hypnotic bounce. ${moodDesc}. High production, addictive, perfect for reels and drifts. Allow vocals/words.`;
 }
 
 export function generateTitle(mood: string): string {
@@ -54,4 +54,52 @@ export function generateTitle(mood: string): string {
   return `${adj} ${suffix} [${moodTag} Phonk]`;
 }
 
-// Demo tracks moved to src/lib/demo-tracks.ts
+/**
+ * Call the unified music generation API (supports Suno/Udio models).
+ * Returns the audio URL on success, or null if no API key / error.
+ */
+export async function generateTrackFromAPI(params: GenerationParams): Promise<string | null> {
+  const apiKey = localStorage.getItem("phonkvibe-api-key");
+  if (!apiKey) {
+    console.log("[PhonkVibe] No API key set — running in demo mode");
+    return null;
+  }
+
+  const prompt = buildPrompt(params);
+  console.log("[PhonkVibe] Generating with prompt:", prompt);
+
+  try {
+    // Unified API endpoint (udioapi.pro-style)
+    const res = await fetch("https://udioapi.pro/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        prompt,
+        duration: params.length,
+        bpm: params.bpm,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[PhonkVibe] API error ${res.status}:`, errText);
+      return null;
+    }
+
+    const data = await res.json();
+    const audioUrl = data.audio_url || data.url || data.audioUrl;
+    if (audioUrl) {
+      console.log("[PhonkVibe] Generated audio URL:", audioUrl);
+      return audioUrl;
+    }
+
+    console.error("[PhonkVibe] No audio URL in API response:", data);
+    return null;
+  } catch (err) {
+    console.error("[PhonkVibe] Generation failed:", err);
+    return null;
+  }
+}
