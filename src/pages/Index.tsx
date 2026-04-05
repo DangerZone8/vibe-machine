@@ -28,7 +28,7 @@ const HomePage = () => {
 
     // Try real API first
     const apiAudioUrl = await generateTrackFromAPI({
-      mood, customPrompt, bpm, length, intensity, vocalChops,
+      mood, customPrompt, bpm, length, intensity, vocalChops, maleVocals, femaleVocals,
     });
 
     // Fallback to demo if no API key or API failed
@@ -108,6 +108,8 @@ const HomePage = () => {
           length={length} setLength={setLength}
           intensity={intensity} setIntensity={setIntensity}
           vocalChops={vocalChops} setVocalChops={setVocalChops}
+          maleVocals={maleVocals} setMaleVocals={setMaleVocals}
+          femaleVocals={femaleVocals} setFemaleVocals={setFemaleVocals}
         />
 
         <div className="flex justify-center pt-2">

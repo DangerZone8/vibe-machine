@@ -5,6 +5,8 @@ export interface GenerationParams {
   length: number;
   intensity: number;
   vocalChops: boolean;
+  maleVocals: boolean;
+  femaleVocals: boolean;
 }
 
 export interface GeneratedTrack {
@@ -31,7 +33,16 @@ const MOOD_PROMPTS: Record<string, string> = {
 export function buildPrompt(params: GenerationParams): string {
   const moodDesc = (params.customPrompt?.trim() || MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
 
-  return `Create a completely original heavy phonk track. Heavy distorted slamming 808 bass, loud prominent cowbell melody, chopped & screwed Memphis rap vocal samples with actual gritty words, phrases, short rap lines or spoken hooks (male or female voice, aggressive/dark tone), punchy kicks, gritty snares, dark lo-fi pads, hypnotic bounce. ${moodDesc}. High production, addictive, perfect for reels and drifts. Allow vocals/words.`;
+  let vocalDirective = "no vocals";
+  if (params.maleVocals && params.femaleVocals) {
+    vocalDirective = "both Male and Female Vocals";
+  } else if (params.maleVocals) {
+    vocalDirective = "Male Vocals only";
+  } else if (params.femaleVocals) {
+    vocalDirective = "Female Vocals only";
+  }
+
+  return `Create a completely original goated heavy phonk track 2026 style, never heard before. Heavy distorted slamming 808 bass, loud prominent rhythmic cowbell melody, chopped & screwed Memphis rap vocal samples WITH gritty real words, phrases, short rap lines and spoken hooks (use ${vocalDirective}). Punchy kicks, gritty snares, dark lo-fi pads, hypnotic bounce. ${moodDesc}. High production, addictive, perfect for reels/drifts/gym/car edits. Make it viral like current top phonk tracks.`;
 }
 
 export function generateTitle(mood: string): string {
