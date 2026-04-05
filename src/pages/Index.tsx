@@ -18,6 +18,8 @@ const HomePage = () => {
   const [length, setLength] = useState(90);
   const [intensity, setIntensity] = useState(6);
   const [vocalChops, setVocalChops] = useState(false);
+  const [maleVocals, setMaleVocals] = useState(true);
+  const [femaleVocals, setFemaleVocals] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generatedTrack, setGeneratedTrack] = useState<GeneratedTrack | null>(null);
 
