@@ -22,11 +22,12 @@ const HomePage = () => {
   const [generatedTrack, setGeneratedTrack] = useState<GeneratedTrack | null>(null);
 
   const handleGenerate = async () => {
+    const exactLength = Math.min(length, 180);
     setGenerating(true);
 
     // Try real API first
     const apiAudioUrl = await generateTrackFromAPI({
-      mood, customPrompt, bpm, length, intensity, vocalType,
+      mood, customPrompt, bpm, length: exactLength, intensity, vocalType,
     });
 
     // Fallback to demo if no API key or API failed
@@ -39,7 +40,7 @@ const HomePage = () => {
       mood,
       tags: [mood, "phonk", intensity > 7 ? "aggressive" : "smooth"],
       audioUrl,
-      duration: length,
+      duration: exactLength,
       bpm,
       createdAt: new Date().toISOString(),
     };
