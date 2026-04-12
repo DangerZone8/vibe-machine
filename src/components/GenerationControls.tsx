@@ -1,8 +1,5 @@
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 
 type VocalType = "male" | "female";
 
@@ -13,15 +10,12 @@ interface GenerationControlsProps {
   setLength: (v: number) => void;
   intensity: number;
   setIntensity: (v: number) => void;
-  vocalChops: boolean;
-  setVocalChops: (v: boolean) => void;
   vocalType: VocalType;
   setVocalType: (v: VocalType) => void;
 }
 
 const GenerationControls = ({
-  bpm, setBpm, length, setLength, intensity, setIntensity, vocalChops, setVocalChops,
-  vocalType, setVocalType,
+  bpm, setBpm, length, setLength, intensity, setIntensity, vocalType, setVocalType,
 }: GenerationControlsProps) => {
   return (
     <div className="space-y-6">
@@ -49,53 +43,54 @@ const GenerationControls = ({
           </div>
           <Slider value={[intensity]} onValueChange={([v]) => setIntensity(v)} min={1} max={10} step={1} className="w-full" />
         </div>
-
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-          <div className="flex items-center gap-2">
-            <Label className="text-sm font-medium text-muted-foreground">Vocal Chops</Label>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-3.5 h-3.5 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Add chopped Memphis-style vocal samples to the beat</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <Switch checked={vocalChops} onCheckedChange={setVocalChops} />
-        </div>
       </div>
 
-      {/* Vocals Section — exclusive choice */}
       <div className="space-y-3">
         <h3 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
           🎤 Vocals (choose one)
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => setVocalType("male")}
-            className={`flex flex-col gap-0.5 p-3 rounded-lg border text-left transition-all ${
+        <div role="radiogroup" aria-label="Vocals" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label
+            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
               vocalType === "male"
                 ? "bg-primary/10 border-primary ring-1 ring-primary"
                 : "bg-muted/30 border-border/50"
             }`}
           >
-            <Label className="text-sm font-medium text-foreground pointer-events-none">Male Vocals</Label>
-            <span className="text-[11px] text-muted-foreground">Gritty aggressive Memphis rap — short words, phrases or repeated hooks</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setVocalType("female")}
-            className={`flex flex-col gap-0.5 p-3 rounded-lg border text-left transition-all ${
+            <input
+              type="radio"
+              name="vocalType"
+              value="male"
+              checked={vocalType === "male"}
+              onChange={() => setVocalType("male")}
+              className="mt-0.5 h-4 w-4 shrink-0 border-border text-primary"
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">Male Vocals</span>
+              <span className="text-[11px] text-muted-foreground">Gritty aggressive Memphis rap — short words or repeated hooks</span>
+            </div>
+          </label>
+
+          <label
+            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
               vocalType === "female"
                 ? "bg-primary/10 border-primary ring-1 ring-primary"
                 : "bg-muted/30 border-border/50"
             }`}
           >
-            <Label className="text-sm font-medium text-foreground pointer-events-none">Female Vocals</Label>
-            <span className="text-[11px] text-muted-foreground">Chopped dark rap — short words, phrases or repeated hooks</span>
-          </button>
+            <input
+              type="radio"
+              name="vocalType"
+              value="female"
+              checked={vocalType === "female"}
+              onChange={() => setVocalType("female")}
+              className="mt-0.5 h-4 w-4 shrink-0 border-border text-primary"
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">Female Vocals</span>
+              <span className="text-[11px] text-muted-foreground">Chopped dark rap — short words or repeated hooks</span>
+            </div>
+          </label>
         </div>
       </div>
     </div>
