@@ -36,7 +36,7 @@ export function buildPrompt(params: GenerationParams): string {
     ? "Male Vocals — gritty aggressive Memphis rap with only a few short words, phrases or repeated hooks"
     : "Female Vocals — chopped dark rap with only a few short words, phrases or repeated hooks";
 
-  return `Create a completely original, ultra-goated heavy phonk track strongly inspired by https://youtu.be/_QFuWQaJUYs. Exactly ${params.length} seconds long — strictly follow the time limit with perfect structure. Heavy distorted slamming 808 bass with powerful bass-driven sections that hit hard, loud prominent rhythmic cowbell melody that stands out, chopped & screwed Memphis rap vocal samples featuring only a few gritty words, short rap lines, or repeated spoken phrases/hooks (${vocalDirective}). Dramatic pauses before massive banger drops, intense build-ups, punchy kicks, gritty snares, dark lo-fi atmospheric pads, hypnotic repetition and addictive bounce. ${moodDesc}. High production quality, nasty viral drift/reel/gym/car edit energy. Make it heavily goated, instantly shareable, and slap harder than current trending phonk tracks.`;
+  return `Create a completely original heavy goated phonk by merging Heavenly Jumpstyle bounce, Brazilian phonk/funk energy, aura-maxxing dark atmosphere, heavy cowbell drift, and viral trends. Exactly ${params.length} seconds long — strictly follow the time limit, never exceed it. Heavy distorted slamming 808 bass with powerful bass sections, loud rhythmic cowbell melody, chopped Memphis vocal samples with only a few gritty words, short rap lines or repeated hooks (${vocalDirective}). Dramatic pauses, banger drops, build-ups, punchy kicks, gritty snares, hypnotic bounce. ${moodDesc}. High production, nasty viral reel/drift/gym energy — make it slap hard and feel goated.`;
 }
 
 export function generateTitle(mood: string): string {
@@ -84,6 +84,7 @@ export async function generateTrackFromAPI(params: GenerationParams): Promise<st
       body: JSON.stringify({
         prompt,
         duration: params.length,
+        max_duration: params.length,
         bpm: params.bpm,
       }),
     });
