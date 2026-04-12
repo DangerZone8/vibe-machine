@@ -84,6 +84,7 @@ export async function generateTrackFromAPI(params: GenerationParams): Promise<st
       body: JSON.stringify({
         prompt,
         duration: params.length,
+        max_duration: params.length,
         bpm: params.bpm,
       }),
     });
