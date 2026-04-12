@@ -29,13 +29,14 @@ const MOOD_PROMPTS: Record<string, string> = {
 };
 
 export function buildPrompt(params: GenerationParams): string {
+  const exactLength = Math.min(params.length, 180);
   const moodDesc = (params.customPrompt?.trim() || MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
 
   const vocalDirective = params.vocalType === "male"
     ? "Male Vocals — gritty aggressive Memphis rap with only a few short words, phrases or repeated hooks"
     : "Female Vocals — chopped dark rap with only a few short words, phrases or repeated hooks";
 
-  return `Create a completely new and totally different original heavy goated phonk track every single time — change the beat, bassline, cowbell pattern, rhythm, melody, and structure completely from previous generations, not just the words. Take inspiration from the intense drops and smooth/crazy transitions in https://youtube.com/shorts/-2-PajEP28o and https://youtube.com/shorts/z1eYV2XVFvk, plus Heavenly Jumpstyle bounce, Brazilian phonk/funk energy, and aura-maxxing vibes. Exactly ${params.length} seconds long, with a hard maximum of ${params.length} seconds and never longer. Heavy distorted slamming 808 bass with powerful bass-driven sections, loud prominent rhythmic cowbell melody with a different pattern every time, chopped & screwed Memphis rap vocal samples with only a few gritty words or repeated short hooks (${vocalDirective}). Include multiple dramatic pauses, heavy real drops, fake drops for tension, intense build-ups, smooth and crazy transitions that make the song feel unique and viral. Punchy kicks, gritty snares, hypnotic repetition and addictive bounce. ${moodDesc}. High production, nasty viral reel/drift/gym/car edit energy — make the music slap hard and feel fresh and goated from the very first second.`;
+  return `Create a completely new and totally different heavy goated phonk track every time — completely change the beat, bassline, cowbell pattern, rhythm, melody and structure from any previous generation. Make it full of hype with strong energy. Exactly ${exactLength} seconds long (max 180 seconds / 3 minutes — strictly follow, no longer tracks). Heavy distorted slamming 808 bass with powerful bass-driven sections, loud prominent rhythmic cowbell melody (different pattern every time), chopped Memphis vocal samples with only a few gritty words or repeated short hooks (${vocalDirective}). Include dramatic pauses, heavy real drops, multiple fake drops for tension, intense build-ups, smooth and crazy transitions that create hype. Punchy kicks, gritty snares, hypnotic repetition and addictive bounce. ${moodDesc}. High production, nasty viral reel/drift/gym energy — make the music slap hard with strong hype from the first second.`;
 }
 
 export function generateTitle(mood: string): string {
@@ -69,7 +70,8 @@ export async function generateTrackFromAPI(params: GenerationParams): Promise<st
     return null;
   }
 
-  const prompt = buildPrompt(params);
+  const exactLength = Math.min(params.length, 180);
+  const prompt = buildPrompt({ ...params, length: exactLength });
   console.log("[PhonkVibe] Generating with prompt:", prompt);
 
   try {
@@ -82,8 +84,8 @@ export async function generateTrackFromAPI(params: GenerationParams): Promise<st
       },
       body: JSON.stringify({
         prompt,
-        duration: params.length,
-        max_duration: params.length,
+        duration: exactLength,
+        max_duration: exactLength,
         bpm: params.bpm,
       }),
     });
