@@ -32,11 +32,9 @@ export function buildPrompt(params: GenerationParams): string {
   const exactLength = Math.min(params.length, 180);
   const moodDesc = (params.customPrompt?.trim() || MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
 
-  const vocalDirective = params.vocalType === "male"
-    ? "Male Vocals — gritty aggressive Memphis rap with only a few short words, phrases or repeated hooks"
-    : "Female Vocals — chopped dark rap with only a few short words, phrases or repeated hooks";
+  const vocalDirective = params.vocalType === "male" ? "Male Vocals" : "Female Vocals";
 
-  return `Create a completely new and totally different heavy goated phonk track every time — completely change the beat, bassline, cowbell pattern, rhythm, melody and structure from any previous generation. Make it full of hype with strong energy. Exactly ${exactLength} seconds long (max 180 seconds / 3 minutes — strictly follow, no longer tracks). Heavy distorted slamming 808 bass with powerful bass-driven sections, loud prominent rhythmic cowbell melody (different pattern every time), chopped Memphis vocal samples with only a few gritty words or repeated short hooks (${vocalDirective}). Include dramatic pauses, heavy real drops, multiple fake drops for tension, intense build-ups, smooth and crazy transitions that create hype. Punchy kicks, gritty snares, hypnotic repetition and addictive bounce. ${moodDesc}. High production, nasty viral reel/drift/gym energy — make the music slap hard with strong hype from the first second.`;
+  return `Create a completely original, fresh, never-heard-before OG heavy phonk track that is totally different from every previous generation. Change the entire beat, bassline, cowbell pattern, rhythm, melody, structure and energy completely every time. Make it full of heavy hype and energy. Exactly ${exactLength} seconds long (max 180 seconds — strictly follow). Heavy distorted slamming 808 bass with powerful bass-driven sections that hit hard, loud prominent rhythmic cowbell melody (completely different pattern every time), chopped & screwed Memphis rap vocal samples with only a few gritty words, short rap lines or repeated spoken hooks (${vocalDirective} as chosen by user). Include dramatic pauses, heavy real drops, multiple fake drops for tension, intense build-ups, smooth and crazy transitions. Punchy kicks, gritty snares, hypnotic repetition and addictive bounce. ${moodDesc}. High production, nasty viral reel/drift/gym/car edit energy — make the music slap hard with strong hype from the very first second and feel like a brand new OG phonk every time.`;
 }
 
 export function generateTitle(mood: string): string {
