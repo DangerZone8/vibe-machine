@@ -25,14 +25,15 @@ const HomePage = () => {
     const exactLength = Math.min(length, 180);
     setGenerating(true);
 
-    // Try real API first
-    const apiAudioUrl = await generateTrackFromAPI({
+    // Try real Suno API via edge function
+    const apiResult = await generateTrackFromAPI({
       mood, customPrompt, bpm, length: exactLength, intensity, vocalType,
     });
 
-    // Fallback to demo if no API key or API failed
+    // Fallback to demo if API failed
     const demoMatch = DEMO_TRACKS.find((t) => t.mood === mood) || DEMO_TRACKS[0];
-    const audioUrl = apiAudioUrl || demoMatch.audioUrl;
+    const audioUrl = apiResult?.audioUrl || demoMatch.audioUrl;
+    const duration = apiResult?.duration || exactLength;
 
     const track: GeneratedTrack = {
       id: crypto.randomUUID(),
@@ -40,7 +41,7 @@ const HomePage = () => {
       mood,
       tags: [mood, "phonk", intensity > 7 ? "aggressive" : "smooth"],
       audioUrl,
-      duration: exactLength,
+      duration,
       bpm,
       createdAt: new Date().toISOString(),
     };

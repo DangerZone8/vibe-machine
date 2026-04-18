@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, Download, RotateCcw, Share2, Heart, Volume2, AlertCircle } from "lucide-react";
+import { Play, Pause, Download, RotateCcw, Share2, Heart, Volume2, AlertCircle, Film, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import type { GeneratedTrack } from "@/lib/music-api";
+import { exportBlackVideoWithAudio } from "@/lib/mp4-export";
+import { toast } from "sonner";
 
 interface AudioPlayerProps {
   track: GeneratedTrack;
@@ -19,6 +21,7 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
   const [liked, setLiked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [exportingMp4, setExportingMp4] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -242,6 +245,27 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
         >
           <Download className="w-5 h-5" /> Download MP3
         </Button>
+        <Button
+          size="lg"
+          disabled={exportingMp4}
+          onClick={async () => {
+            try {
+              setExportingMp4(true);
+              toast.info("Exporting MP4 — this plays the full track once. Don't close the tab.");
+              await exportBlackVideoWithAudio(track.audioUrl, track.title, duration);
+              toast.success("MP4 downloaded!");
+            } catch (e: any) {
+              console.error("MP4 export failed:", e);
+              toast.error(`MP4 export failed: ${e?.message || e}`);
+            } finally {
+              setExportingMp4(false);
+            }
+          }}
+          className="gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-heading font-bold"
+        >
+          {exportingMp4 ? <Loader2 className="w-5 h-5 animate-spin" /> : <Film className="w-5 h-5" />}
+          {exportingMp4 ? "Exporting..." : "Download MP4"}
+        </Button>
         {onRegenerate && (
           <Button variant="outline" size="sm" onClick={onRegenerate} className="gap-2 neon-border hover:bg-primary/10">
             <RotateCcw className="w-4 h-4" /> Regenerate
@@ -261,7 +285,7 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        Demo mode — connect an API key in Settings for real AI generation
+        Tap the page first to enable sound, then press play
       </p>
     </div>
   );
