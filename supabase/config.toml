@@ -1,1 +1,4 @@
 project_id = "trbmakzdangaumwwxtrf"
+
+[functions.generate-suno]
+verify_jwt = false
