@@ -210,10 +210,37 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
 
       {/* Action buttons */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Button variant="outline" size="sm" className="gap-2 neon-border hover:bg-primary/10" asChild>
-          <a href={track.audioUrl} download={`${track.title}.mp3`} target="_blank" rel="noopener noreferrer">
-            <Download className="w-4 h-4" /> Download MP3
-          </a>
+        <Button
+          size="lg"
+          onClick={async () => {
+            try {
+              const res = await fetch(track.audioUrl, { mode: "cors" });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const blob = await res.blob();
+              const mp3Blob = blob.type === "audio/mpeg" ? blob : new Blob([blob], { type: "audio/mpeg" });
+              const url = URL.createObjectURL(mp3Blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `${track.title}.mp3`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } catch (e) {
+              console.error("Download failed, falling back to direct link:", e);
+              const a = document.createElement("a");
+              a.href = track.audioUrl;
+              a.download = `${track.title}.mp3`;
+              a.target = "_blank";
+              a.rel = "noopener noreferrer";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            }
+          }}
+          className="gap-2 gradient-phonk text-primary-foreground glow-purple font-heading font-bold"
+        >
+          <Download className="w-5 h-5" /> Download MP3
         </Button>
         {onRegenerate && (
           <Button variant="outline" size="sm" onClick={onRegenerate} className="gap-2 neon-border hover:bg-primary/10">
