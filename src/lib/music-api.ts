@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export interface GenerationParams {
   mood: string;
   customPrompt?: string;
@@ -31,10 +33,9 @@ const MOOD_PROMPTS: Record<string, string> = {
 export function buildPrompt(params: GenerationParams): string {
   const exactLength = Math.min(params.length, 180);
   const moodDesc = (params.customPrompt?.trim() || MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
+  const vocal = params.vocalType === "male" ? "Male" : "Female";
 
-  const vocalDirective = params.vocalType === "male" ? "Male Vocals" : "Female Vocals";
-
-  return `Create a completely new and totally different original heavy goated phonk track every single time — full change in beat, bassline, cowbell pattern, rhythm, melody and structure from any previous generation. Exactly ${exactLength} seconds long (max 180 seconds). Heavy distorted slamming 808 bass with powerful bass-driven sections, loud prominent rhythmic cowbell melody (different pattern every time), chopped Memphis vocal samples with only a few gritty words or repeated short hooks (${vocalDirective} as chosen). Heavy real drops, multiple fake drops, intense build-ups, dramatic pauses, crazy transitions. Punchy kicks, gritty snares, hypnotic bounce. ${moodDesc}. High production, nasty viral reel/drift/gym energy — make the music slap hard with strong hype from the very first second.`;
+  return `Completely original heavy goated phonk track, totally different beat and structure every time, heavy distorted slamming 808 bass, loud rhythmic cowbell melody, chopped Memphis rap vocals with a few gritty words and repeated hooks (${vocal} voice), heavy real drops, multiple fake drops, intense build-ups, dramatic pauses, crazy transitions, hypnotic bounce, dark lo-fi atmosphere, ${moodDesc}, nasty viral reel/drift/gym energy, max ${exactLength} seconds`;
 }
 
 export function generateTitle(mood: string): string {
@@ -58,51 +59,38 @@ export function generateTitle(mood: string): string {
 }
 
 /**
- * Call the unified music generation API (supports Suno/Udio models).
- * Returns the audio URL on success, or null if no API key / error.
+ * Generate a real track via the Suno-powered edge function.
+ * Returns { audioUrl, duration } or null on failure (caller falls back to demo).
  */
-export async function generateTrackFromAPI(params: GenerationParams): Promise<string | null> {
-  const apiKey = localStorage.getItem("phonkvibe-api-key");
-  if (!apiKey) {
-    console.log("[PhonkVibe] No API key set — running in demo mode");
-    return null;
-  }
-
+export async function generateTrackFromAPI(
+  params: GenerationParams,
+): Promise<{ audioUrl: string; duration: number } | null> {
   const exactLength = Math.min(params.length, 180);
   const prompt = buildPrompt({ ...params, length: exactLength });
-  console.log("[PhonkVibe] Generating with prompt:", prompt);
+  const title = generateTitle(params.mood);
+
+  console.log("[PhonkVibe] Generating via Suno edge fn:", { prompt, length: exactLength });
 
   try {
-    // Unified API endpoint (udioapi.pro-style)
-    const res = await fetch("https://udioapi.pro/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
+    const { data, error } = await supabase.functions.invoke("generate-suno", {
+      body: {
         prompt,
-        duration: exactLength,
-        max_duration: exactLength,
-        bpm: params.bpm,
-      }),
+        length: exactLength,
+        vocalType: params.vocalType,
+        title,
+      },
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`[PhonkVibe] API error ${res.status}:`, errText);
+    if (error) {
+      console.error("[PhonkVibe] Edge function error:", error);
+      return null;
+    }
+    if (!data?.audioUrl) {
+      console.error("[PhonkVibe] No audioUrl in response:", data);
       return null;
     }
 
-    const data = await res.json();
-    const audioUrl = data.audio_url || data.url || data.audioUrl;
-    if (audioUrl) {
-      console.log("[PhonkVibe] Generated audio URL:", audioUrl);
-      return audioUrl;
-    }
-
-    console.error("[PhonkVibe] No audio URL in API response:", data);
-    return null;
+    return { audioUrl: data.audioUrl, duration: Number(data.duration) || exactLength };
   } catch (err) {
     console.error("[PhonkVibe] Generation failed:", err);
     return null;
