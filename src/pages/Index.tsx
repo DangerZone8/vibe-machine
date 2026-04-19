@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Sparkles, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -6,14 +6,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import MoodSelector from "@/components/MoodSelector";
 import GenerationControls from "@/components/GenerationControls";
+import MusicTypeToggle from "@/components/MusicTypeToggle";
 import AudioPlayer from "@/components/AudioPlayer";
 import GeneratingOverlay from "@/components/GeneratingOverlay";
-import { generateTitle, generateTrackFromAPI, type GeneratedTrack } from "@/lib/music-api";
+import { generateTitle, generateTrackFromAPI, type GeneratedTrack, type MusicType } from "@/lib/music-api";
 import { DEMO_TRACKS } from "@/lib/demo-tracks";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const HomePage = () => {
   const [mood, setMood] = useState("chill");
+  const [musicType, setMusicType] = useState<MusicType>("phonk");
   const [customPrompt, setCustomPrompt] = useState("");
   const [bpm, setBpm] = useState(120);
   const [length, setLength] = useState(90);
@@ -26,24 +28,24 @@ const HomePage = () => {
     const exactLength = Math.min(length, 180);
     setGenerating(true);
 
-    // Try real Suno API via edge function
     const apiResult = await generateTrackFromAPI({
-      mood, customPrompt, bpm, length: exactLength, intensity, vocalType,
+      mood, customPrompt, bpm, length: exactLength, intensity, vocalType, musicType,
     });
 
-    // Fallback to demo if API failed
     if (!apiResult) {
       toast.error("Generation failed — check your SUNO_API_KEY in Lovable Cloud secrets");
     }
+
     const demoMatch = DEMO_TRACKS.find((t) => t.mood === mood) || DEMO_TRACKS[0];
     const audioUrl = apiResult?.audioUrl || demoMatch.audioUrl;
     const duration = apiResult?.duration || exactLength;
 
     const track: GeneratedTrack = {
       id: crypto.randomUUID(),
-      title: generateTitle(mood),
+      title: generateTitle(mood, musicType),
       mood,
-      tags: [mood, "phonk", intensity > 7 ? "aggressive" : "smooth"],
+      musicType,
+      tags: [mood, musicType, intensity > 7 ? "aggressive" : "smooth"],
       audioUrl,
       duration,
       bpm,
@@ -54,9 +56,11 @@ const HomePage = () => {
     setGenerating(false);
   };
 
+  const isPhonk = musicType === "phonk";
+
   return (
     <div className="pb-24 md:pb-8 relative">
-      {generating && <GeneratingOverlay />}
+      {generating && <GeneratingOverlay musicType={musicType} />}
 
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -67,17 +71,34 @@ const HomePage = () => {
         <div className="relative container mx-auto px-4 pt-16 pb-12 text-center space-y-4">
           <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-black tracking-wider text-glow-purple leading-tight">
             Turn Your Mood Into<br />
-            <span className="gradient-phonk bg-clip-text text-transparent">Fire Phonk Beats</span>
+            <span
+              className={`bg-clip-text text-transparent ${
+                isPhonk
+                  ? "gradient-phonk"
+                  : "bg-gradient-to-r from-sky-400 to-teal-400"
+              }`}
+            >
+              {isPhonk ? "Fire Phonk Beats" : "Viral Songs"}
+            </span>
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            AI-powered phonk generator. Pick a vibe, hit generate, get a fresh beat.
-            Every track is original and ready for your content.
+            {isPhonk
+              ? "AI-powered phonk generator. Heavy 808s, cowbells, Memphis vibes. Every track unique and ready for your content."
+              : "AI-powered song generator. Full vocals, catchy hooks, viral-ready. Built for content creators and influencers."}
           </p>
         </div>
       </section>
 
       {/* Generator */}
       <section className="container mx-auto px-4 space-y-8 relative z-10 -mt-4">
+
+        <div className="space-y-3">
+          <h2 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
+            Music Type
+          </h2>
+          <MusicTypeToggle value={musicType} onChange={setMusicType} />
+        </div>
+
         <div className="space-y-4">
           <h2 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
             Select Your Mood
@@ -95,12 +116,18 @@ const HomePage = () => {
                 <Info className="w-3.5 h-3.5 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p>Pro tip: Describe your scene for better results, e.g. "driving through neon Tokyo at 3AM feeling nostalgic"</p>
+                <p>
+                  {isPhonk
+                    ? 'Describe your vibe. e.g. "drifting through neon Tokyo at 3AM" or "gym rage mode"'
+                    : 'Describe your scene. e.g. "heartbreak in the rain" or "summer rooftop party vibes"'}
+                </p>
               </TooltipContent>
             </Tooltip>
           </div>
           <Textarea
-            placeholder='e.g. "happy and partying in neon city", "sad rainy night drive", "hype rage drift"...'
+            placeholder={isPhonk
+              ? 'e.g. "rainy night drift", "gym rage mode", "hype street racing"...'
+              : 'e.g. "heartbreak ballad", "summer anthem", "viral party banger"...'}
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
             className="bg-muted/30 border-border/50 resize-none h-20 placeholder:text-muted-foreground/40"
@@ -112,6 +139,7 @@ const HomePage = () => {
           length={length} setLength={setLength}
           intensity={intensity} setIntensity={setIntensity}
           vocalType={vocalType} setVocalType={setVocalType}
+          musicType={musicType}
         />
 
         <div className="flex justify-center pt-2">
@@ -119,10 +147,14 @@ const HomePage = () => {
             size="lg"
             onClick={handleGenerate}
             disabled={generating}
-            className="gradient-phonk text-primary-foreground font-heading text-sm sm:text-base tracking-wider px-8 sm:px-10 py-6 rounded-xl glow-purple animate-pulse-glow hover:scale-105 transition-transform"
+            className={`font-heading text-sm sm:text-base tracking-wider px-8 sm:px-10 py-6 rounded-xl hover:scale-105 transition-transform text-white ${
+              isPhonk
+                ? "gradient-phonk glow-purple animate-pulse-glow"
+                : "bg-gradient-to-r from-sky-500 to-teal-400 shadow-[0_0_25px_hsl(195_90%_50%/0.35)] hover:shadow-[0_0_35px_hsl(195_90%_50%/0.5)]"
+            }`}
           >
             <Sparkles className="w-5 h-5 mr-2" />
-            Generate New Phonk
+            {isPhonk ? "Generate Fire Phonk" : "Generate Viral Song"}
           </Button>
         </div>
 
@@ -139,7 +171,7 @@ const HomePage = () => {
         {!generatedTrack && (
           <div className="space-y-4 pt-4">
             <h2 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
-              🔥 Demo Tracks — Hit Play
+              Demo Tracks — Hit Play
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {DEMO_TRACKS.map((track) => (

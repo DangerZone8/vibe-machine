@@ -1,32 +1,24 @@
-// sunoapi.org Suno music generation edge function.
-//
-// Flow:
-//   1) POST https://api.sunoapi.org/api/v1/generate
-//      headers: Authorization: Bearer {SUNO_API_KEY}
-//      body:    { prompt, customMode: false, instrumental: false, model: "V3_5", callBackUrl }
-//   2) GET  https://api.sunoapi.org/api/v1/generate/record-info?taskId={taskId}
-//      Poll every 3s until status === "SUCCESS" and a track has audioUrl.
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SUNO_API_KEY = Deno.env.get("SUNO_API_KEY");
+const SUNO_API_KEY = Deno.env.get("SUNO_API_KEY") ?? "YOUR_SUNOAPI_ORG_KEY";
 const BASE = "https://api.sunoapi.org/api/v1";
 
 interface RequestBody {
   prompt: string;
   length: number;
   vocalType: "male" | "female";
+  musicType: "phonk" | "song";
   title?: string;
 }
 
 function authHeaders(): HeadersInit {
   return {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${SUNO_API_KEY ?? ""}`,
+    "Authorization": `Bearer ${SUNO_API_KEY}`,
   };
 }
 
@@ -36,9 +28,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (!SUNO_API_KEY) {
+    if (!SUNO_API_KEY || SUNO_API_KEY === "YOUR_SUNOAPI_ORG_KEY") {
       return new Response(
-        JSON.stringify({ error: "SUNO_API_KEY not configured" }),
+        JSON.stringify({ error: "SUNO_API_KEY not configured — add it to Lovable Cloud secrets" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -52,10 +44,9 @@ Deno.serve(async (req) => {
     }
 
     const length = Math.min(Math.max(Number(body.length) || 90, 30), 180);
-    const uniqueSeed = Math.random().toString(36).substring(2, 10);
-    const promptWithSeed = `${body.prompt} Unique seed: ${uniqueSeed}`;
+    const uniqueSeed = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    const promptWithSeed = `${body.prompt} [UniqueID:${uniqueSeed}]`;
 
-    // 1) Submit generation
     const submitRes = await fetch(`${BASE}/generate`, {
       method: "POST",
       headers: authHeaders(),
@@ -92,7 +83,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2) Poll for result (~3 minutes max)
     const maxAttempts = 60;
     const intervalMs = 3000;
     let audioUrl: string | null = null;
@@ -167,7 +157,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: any) {
-    console.error("generate-suno (sunoapi) error:", err);
+    console.error("generate-suno error:", err);
     return new Response(
       JSON.stringify({ error: String(err?.message || err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },

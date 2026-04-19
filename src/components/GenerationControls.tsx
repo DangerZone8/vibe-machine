@@ -1,5 +1,6 @@
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import type { MusicType } from "@/lib/music-api";
 
 type VocalType = "male" | "female";
 
@@ -12,11 +13,22 @@ interface GenerationControlsProps {
   setIntensity: (v: number) => void;
   vocalType: VocalType;
   setVocalType: (v: VocalType) => void;
+  musicType?: MusicType;
 }
 
 const GenerationControls = ({
-  bpm, setBpm, length, setLength, intensity, setIntensity, vocalType, setVocalType,
+  bpm, setBpm, length, setLength, intensity, setIntensity, vocalType, setVocalType, musicType = "phonk",
 }: GenerationControlsProps) => {
+  const isPhonk = musicType === "phonk";
+
+  const maleDesc = isPhonk
+    ? "Gritty Memphis rap — short punchy words and repeated hooks"
+    : "Male vocalist — expressive delivery with strong hooks";
+
+  const femaleDesc = isPhonk
+    ? "Dark chopped rap — haunting short phrases and hooks"
+    : "Female vocalist — emotional delivery with catchy melodies";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -25,7 +37,7 @@ const GenerationControls = ({
             <Label className="text-sm font-medium text-muted-foreground">BPM</Label>
             <span className="font-heading text-sm text-primary">{bpm}</span>
           </div>
-          <Slider value={[bpm]} onValueChange={([v]) => setBpm(v)} min={80} max={160} step={5} className="w-full" />
+          <Slider value={[bpm]} onValueChange={([v]) => setBpm(v)} min={60} max={180} step={5} className="w-full" />
         </div>
 
         <div className="space-y-3">
@@ -47,7 +59,7 @@ const GenerationControls = ({
 
       <div className="space-y-3">
         <h3 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
-          🎤 Vocals (choose one)
+          Vocals
         </h3>
         <div role="radiogroup" aria-label="Vocals" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label
@@ -67,7 +79,7 @@ const GenerationControls = ({
             />
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium text-foreground">Male Vocals</span>
-              <span className="text-[11px] text-muted-foreground">Gritty aggressive Memphis rap — short words or repeated hooks</span>
+              <span className="text-[11px] text-muted-foreground">{maleDesc}</span>
             </div>
           </label>
 
@@ -88,7 +100,7 @@ const GenerationControls = ({
             />
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium text-foreground">Female Vocals</span>
-              <span className="text-[11px] text-muted-foreground">Chopped dark rap — short words or repeated hooks</span>
+              <span className="text-[11px] text-muted-foreground">{femaleDesc}</span>
             </div>
           </label>
         </div>
