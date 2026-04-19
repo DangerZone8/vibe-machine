@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Sparkles, Info } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -31,6 +32,9 @@ const HomePage = () => {
     });
 
     // Fallback to demo if API failed
+    if (!apiResult) {
+      toast.error("Generation failed — check your GoAPI key in settings");
+    }
     const demoMatch = DEMO_TRACKS.find((t) => t.mood === mood) || DEMO_TRACKS[0];
     const audioUrl = apiResult?.audioUrl || demoMatch.audioUrl;
     const duration = apiResult?.duration || exactLength;

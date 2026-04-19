@@ -62,11 +62,11 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({
-        custom_mode: true,
+        custom_mode: false,
+        mv: "chirp-v3-5",
         input: {
           gpt_description_prompt: promptWithSeed,
           make_instrumental: false,
-          mv: "chirp-v4",
           duration: length,
         },
       }),
