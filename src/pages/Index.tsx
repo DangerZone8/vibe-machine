@@ -33,7 +33,7 @@ const HomePage = () => {
 
     // Fallback to demo if API failed
     if (!apiResult) {
-      toast.error("Generation failed — check your GoAPI key in settings");
+      toast.error("Generation failed — check your SUNO_API_KEY in Lovable Cloud secrets");
     }
     const demoMatch = DEMO_TRACKS.find((t) => t.mood === mood) || DEMO_TRACKS[0];
     const audioUrl = apiResult?.audioUrl || demoMatch.audioUrl;
