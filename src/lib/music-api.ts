@@ -35,7 +35,7 @@ export function buildPrompt(params: GenerationParams): string {
   const moodDesc = (params.customPrompt?.trim() || MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
   const vocal = params.vocalType === "male" ? "Male" : "Female";
 
-  return `Completely original heavy goated phonk track, totally different beat and structure every time, heavy distorted slamming 808 bass, loud rhythmic cowbell melody, chopped Memphis rap vocals with a few gritty words and repeated hooks (${vocal} voice), heavy real drops, multiple fake drops, intense build-ups, dramatic pauses, crazy transitions, hypnotic bounce, dark lo-fi atmosphere, ${moodDesc}, nasty viral reel/drift/gym energy, max ${exactLength} seconds`;
+  return `[FRESH GENERATION - DIFFERENT FROM ALL PREVIOUS] Completely original heavy goated phonk track, totally different beat and structure every time, heavy distorted slamming 808 bass, loud rhythmic cowbell melody, chopped Memphis rap vocals with a few gritty words and repeated hooks (${vocal} voice), heavy real drops, multiple fake drops, intense build-ups, dramatic pauses, crazy transitions, hypnotic bounce, dark lo-fi atmosphere, ${moodDesc}, nasty viral reel/drift/gym energy, BPM: ${params.bpm}, intensity level: ${params.intensity}/10, max ${exactLength} seconds`;
 }
 
 export function generateTitle(mood: string): string {
