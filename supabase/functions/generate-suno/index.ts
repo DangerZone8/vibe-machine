@@ -1,11 +1,11 @@
-// GoAPI Suno music generation edge function.
+// sunoapi.org Suno music generation edge function.
 //
 // Flow:
-//   1) POST https://api.goapi.ai/api/suno/v1/music
-//      headers: X-API-Key: {SUNO_API_KEY}
-//      body:    { custom_mode, input: { gpt_description_prompt, make_instrumental, mv } }
-//   2) GET  https://api.goapi.ai/api/suno/v1/music/{taskId}
-//      Poll every 3s until status === "completed" / clip has audio_url
+//   1) POST https://api.sunoapi.org/api/v1/generate
+//      headers: Authorization: Bearer {SUNO_API_KEY}
+//      body:    { prompt, customMode: false, instrumental: false, model: "V3_5", callBackUrl }
+//   2) GET  https://api.sunoapi.org/api/v1/generate/record-info?taskId={taskId}
+//      Poll every 3s until status === "SUCCESS" and a track has audioUrl.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +14,7 @@ const corsHeaders = {
 };
 
 const SUNO_API_KEY = Deno.env.get("SUNO_API_KEY");
-const GOAPI_BASE = "https://api.goapi.ai/api/suno/v1/music";
+const BASE = "https://api.sunoapi.org/api/v1";
 
 interface RequestBody {
   prompt: string;
@@ -26,7 +26,7 @@ interface RequestBody {
 function authHeaders(): HeadersInit {
   return {
     "Content-Type": "application/json",
-    "X-API-Key": SUNO_API_KEY ?? "",
+    "Authorization": `Bearer ${SUNO_API_KEY ?? ""}`,
   };
 }
 
@@ -52,48 +52,42 @@ Deno.serve(async (req) => {
     }
 
     const length = Math.min(Math.max(Number(body.length) || 90, 30), 180);
-
-    // Force unique generation each call — GoAPI dedupes similar prompts otherwise.
     const uniqueSeed = Math.random().toString(36).substring(2, 10);
     const promptWithSeed = `${body.prompt} Unique seed: ${uniqueSeed}`;
 
     // 1) Submit generation
-    const submitRes = await fetch(GOAPI_BASE, {
+    const submitRes = await fetch(`${BASE}/generate`, {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({
-        custom_mode: false,
-        mv: "chirp-v3-5",
-        input: {
-          gpt_description_prompt: promptWithSeed,
-          make_instrumental: false,
-          duration: length,
-        },
+        prompt: promptWithSeed,
+        customMode: false,
+        instrumental: false,
+        model: "V3_5",
+        callBackUrl: "https://example.com/no-op",
       }),
     });
 
     const submitText = await submitRes.text();
     let submitJson: any = {};
     try { submitJson = JSON.parse(submitText); } catch { /* ignore */ }
-    console.log("GoAPI submit:", submitRes.status, submitText.slice(0, 500));
+    console.log("sunoapi submit:", submitRes.status, submitText.slice(0, 500));
 
     if (!submitRes.ok) {
       return new Response(
-        JSON.stringify({ error: "GoAPI submit failed", status: submitRes.status, detail: submitJson || submitText }),
+        JSON.stringify({ error: "sunoapi submit failed", status: submitRes.status, detail: submitJson || submitText }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // GoAPI returns { code, data: { task_id, ... } } or similar
     const taskId =
-      submitJson?.data?.task_id ||
       submitJson?.data?.taskId ||
-      submitJson?.task_id ||
-      submitJson?.id;
+      submitJson?.data?.task_id ||
+      submitJson?.taskId;
 
     if (!taskId) {
       return new Response(
-        JSON.stringify({ error: "No task_id in submit response", detail: submitJson }),
+        JSON.stringify({ error: "No taskId in submit response", detail: submitJson }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -107,48 +101,63 @@ Deno.serve(async (req) => {
 
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise((r) => setTimeout(r, intervalMs));
-      const pollRes = await fetch(`${GOAPI_BASE}/${encodeURIComponent(taskId)}`, {
-        method: "GET",
-        headers: authHeaders(),
-      });
+      const pollRes = await fetch(
+        `${BASE}/generate/record-info?taskId=${encodeURIComponent(taskId)}`,
+        { method: "GET", headers: authHeaders() },
+      );
       const pollText = await pollRes.text();
       let pollJson: any = {};
       try { pollJson = JSON.parse(pollText); } catch { /* ignore */ }
 
-      // GoAPI shape: { code, data: { status, clips: [{ audio_url, ... }] } }
-      const data = pollJson?.data ?? pollJson;
-      const status: string = (data?.status || "").toString().toLowerCase();
-      const clips = data?.clips || data?.output?.clips || [];
-      const first = Array.isArray(clips) ? clips[0] : null;
+      const data = pollJson?.data ?? {};
+      const status: string = (data?.status || "").toString().toUpperCase();
+      const tracks =
+        data?.response?.sunoData ||
+        data?.response?.data ||
+        data?.sunoData ||
+        [];
+      const first = Array.isArray(tracks) ? tracks[0] : null;
 
       const candidate =
-        first?.audio_url ||
         first?.audioUrl ||
-        first?.source_audio_url ||
+        first?.audio_url ||
+        first?.streamAudioUrl ||
         first?.stream_audio_url;
 
       if (candidate) {
         audioUrl = candidate;
-        duration = Number(first?.metadata?.duration || first?.duration) || length;
+        duration = Number(first?.duration) || length;
         title = first?.title || title;
-        if (status === "completed" || status === "complete" || status === "succeeded" || status === "success") {
+        if (
+          status === "SUCCESS" ||
+          status === "FIRST_SUCCESS" ||
+          status === "TEXT_SUCCESS" ||
+          status === "COMPLETE"
+        ) {
           break;
         }
       }
 
-      if (status === "failed" || status === "error") {
+      if (
+        status === "CREATE_TASK_FAILED" ||
+        status === "GENERATE_AUDIO_FAILED" ||
+        status === "CALLBACK_EXCEPTION" ||
+        status === "SENSITIVE_WORD_ERROR" ||
+        status === "FAILED" ||
+        status === "ERROR"
+      ) {
         return new Response(
-          JSON.stringify({ error: "GoAPI generation failed", status, detail: pollJson }),
+          JSON.stringify({ error: "sunoapi generation failed", status, detail: pollJson }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
-      console.log(`GoAPI poll ${i + 1}/${maxAttempts} status=${status} hasAudio=${!!candidate}`);
+      console.log(`sunoapi poll ${i + 1}/${maxAttempts} status=${status} hasAudio=${!!candidate}`);
     }
 
     if (!audioUrl) {
       return new Response(
-        JSON.stringify({ error: "Timed out waiting for GoAPI generation" }),
+        JSON.stringify({ error: "Timed out waiting for sunoapi generation" }),
         { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -158,7 +167,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: any) {
-    console.error("generate-suno (GoAPI) error:", err);
+    console.error("generate-suno (sunoapi) error:", err);
     return new Response(
       JSON.stringify({ error: String(err?.message || err) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
