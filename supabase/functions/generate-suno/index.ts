@@ -53,6 +53,10 @@ Deno.serve(async (req) => {
 
     const length = Math.min(Math.max(Number(body.length) || 90, 30), 180);
 
+    // Force unique generation each call — GoAPI dedupes similar prompts otherwise.
+    const uniqueSeed = Math.random().toString(36).substring(2, 10);
+    const promptWithSeed = `${body.prompt} Unique seed: ${uniqueSeed}`;
+
     // 1) Submit generation
     const submitRes = await fetch(GOAPI_BASE, {
       method: "POST",
@@ -60,9 +64,10 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         custom_mode: true,
         input: {
-          gpt_description_prompt: body.prompt,
+          gpt_description_prompt: promptWithSeed,
           make_instrumental: false,
           mv: "chirp-v4",
+          duration: length,
         },
       }),
     });
