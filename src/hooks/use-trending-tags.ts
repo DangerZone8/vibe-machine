@@ -16,7 +16,7 @@ export function useTrendingTags(mood?: string) {
     async function fetch() {
       setLoading(true);
       const cutoff = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("trending_tags")
         .select("tag, mood_category, score")
         .gte("fetched_at", cutoff)
