@@ -10,6 +10,7 @@ export interface GenerationParams {
   intensity: number;
   vocalType: "male" | "female";
   musicType: MusicType;
+  trendingTags?: string;
 }
 
 export interface GeneratedTrack {
@@ -48,16 +49,22 @@ function buildPhonkPrompt(params: GenerationParams): string {
   const exactLength = Math.min(params.length, 180);
   const moodDesc = (params.customPrompt?.trim() || PHONK_MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
   const vocal = params.vocalType === "male" ? "gritty male Memphis rap" : "dark female chopped rap";
+  const trendingPart = params.trendingTags
+    ? ` Inspired by current trending styles: ${params.trendingTags}. Make it sound fresh and viral for 2026.`
+    : "";
 
-  return `Completely original heavy goated phonk track, totally different beat and structure every time. Heavy distorted slamming 808 bass, loud rhythmic cowbell melody, chopped ${vocal} vocals with short punchy words and repeated hooks, heavy real drops, multiple fake-out drops, intense build-ups, dramatic silences, crazy transitions, hypnotic bounce, dark lo-fi atmosphere. ${moodDesc}. Nasty viral reel/drift/gym energy. BPM: ${params.bpm}. Intensity: ${params.intensity}/10. Max ${exactLength} seconds. Make it unique, different, and fire every single time.`;
+  return `Completely original heavy goated phonk track, totally different beat and structure every time. Heavy distorted slamming 808 bass, loud rhythmic cowbell melody, chopped ${vocal} vocals with short punchy words and repeated hooks, heavy real drops, multiple fake-out drops, intense build-ups, dramatic silences, crazy transitions, hypnotic bounce, dark lo-fi atmosphere. ${moodDesc}.${trendingPart} Nasty viral reel/drift/gym energy. BPM: ${params.bpm}. Intensity: ${params.intensity}/10. Max ${exactLength} seconds.`;
 }
 
 function buildSongPrompt(params: GenerationParams): string {
   const exactLength = Math.min(params.length, 180);
   const moodDesc = (params.customPrompt?.trim() || SONG_MOOD_PROMPTS[params.mood.toLowerCase()] || params.mood).trim();
   const vocal = params.vocalType === "male" ? "male vocalist" : "female vocalist";
+  const trendingPart = params.trendingTags
+    ? ` Inspired by current trending styles: ${params.trendingTags}. Make it sound fresh and viral for 2026.`
+    : "";
 
-  return `Original viral-ready song with full structure: intro, verse, pre-chorus, massive hook chorus, bridge, outro. Catchy earworm melody, memorable hook lyrics, professional radio-quality production. ${vocal} with expressive delivery. ${moodDesc}. Perfect for reels, shorts, TikTok, and content creators. BPM: ${params.bpm}. Intensity: ${params.intensity}/10. Max ${exactLength} seconds. Make every element unique and make the hook impossible to forget.`;
+  return `Original viral-ready song with full structure: intro, verse, pre-chorus, massive hook chorus, bridge, outro. Catchy earworm melody, memorable hook lyrics, professional radio-quality production. ${vocal} with expressive delivery. ${moodDesc}.${trendingPart} Perfect for reels, shorts, TikTok, and content creators. BPM: ${params.bpm}. Intensity: ${params.intensity}/10. Max ${exactLength} seconds.`;
 }
 
 export function buildPrompt(params: GenerationParams): string {

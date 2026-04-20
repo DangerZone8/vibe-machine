@@ -9,7 +9,9 @@ import GenerationControls from "@/components/GenerationControls";
 import MusicTypeToggle from "@/components/MusicTypeToggle";
 import AudioPlayer from "@/components/AudioPlayer";
 import GeneratingOverlay from "@/components/GeneratingOverlay";
+import TrendingNow from "@/components/TrendingNow";
 import { generateTitle, generateTrackFromAPI, type GeneratedTrack, type MusicType } from "@/lib/music-api";
+import { useTrendingTags } from "@/hooks/use-trending-tags";
 import { DEMO_TRACKS } from "@/lib/demo-tracks";
 import heroBg from "@/assets/hero-bg.jpg";
 
@@ -24,12 +26,17 @@ const HomePage = () => {
   const [generating, setGenerating] = useState(false);
   const [generatedTrack, setGeneratedTrack] = useState<GeneratedTrack | null>(null);
 
+  const { tags: trendingTags, allTags, loading: trendingLoading, getTagsForPrompt } = useTrendingTags(mood);
+
   const handleGenerate = async () => {
     const exactLength = Math.min(length, 180);
     setGenerating(true);
 
+    const trendingTagsStr = getTagsForPrompt(mood);
+
     const apiResult = await generateTrackFromAPI({
       mood, customPrompt, bpm, length: exactLength, intensity, vocalType, musicType,
+      trendingTags: trendingTagsStr || undefined,
     });
 
     if (!apiResult) {
@@ -91,6 +98,11 @@ const HomePage = () => {
 
       {/* Generator */}
       <section className="container mx-auto px-4 space-y-8 relative z-10 -mt-4">
+
+        {/* Trending Now */}
+        {(trendingLoading || allTags.length > 0) && (
+          <TrendingNow tags={trendingTags} loading={trendingLoading} />
+        )}
 
         <div className="space-y-3">
           <h2 className="font-heading text-sm font-semibold tracking-widest text-muted-foreground uppercase">
