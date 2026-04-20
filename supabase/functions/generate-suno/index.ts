@@ -1,26 +1,11 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type",
 };
 
-const SUNO_API_KEY = Deno.env.get("SUNO_API_KEY") ?? "YOUR_SUNOAPI_ORG_KEY";
+const SUNO_API_KEY = Deno.env.get("SUNO_API_KEY");
 const BASE = "https://api.sunoapi.org/api/v1";
-
-interface RequestBody {
-  prompt: string;
-  length: number;
-  vocalType: "male" | "female";
-  musicType: "phonk" | "song";
-  title?: string;
-}
-
-function authHeaders(): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${SUNO_API_KEY}`,
-  };
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,137 +13,104 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (!SUNO_API_KEY || SUNO_API_KEY === "YOUR_SUNOAPI_ORG_KEY") {
+    if (!SUNO_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "SUNO_API_KEY not configured — add it to Lovable Cloud secrets" }),
+        JSON.stringify({ error: "Add SUNO_API_KEY to Lovable Cloud secrets" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const body = (await req.json()) as RequestBody;
-    if (!body?.prompt || typeof body.prompt !== "string") {
-      return new Response(
-        JSON.stringify({ error: "Missing prompt" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
+    const body = await req.json();
     const length = Math.min(Math.max(Number(body.length) || 90, 30), 180);
-    const uniqueSeed = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-    // sunoapi.org enforces 500 char limit in non-custom mode. Truncate to 400 to be safe.
-    const basePrompt = `${body.prompt} Unique seed: ${uniqueSeed}`;
-    const promptWithSeed = basePrompt.length > 400 ? basePrompt.slice(0, 400) : basePrompt;
+    const vocal = body.vocalType === "female" ? "Female" : "Male";
+    const mood = body.prompt || "hype aggressive phonk";
+    const seed = Math.random().toString(36).substring(2, 8);
+
+    const style = `heavy phonk, distorted 808 bass, cowbell melody, Memphis rap, dark lo-fi, ${mood}`.slice(0, 120);
+    const lyrics = `[Verse]\n${vocal} voice, gritty words, phonk energy\n[Hook]\nHeavy drops, fake drops, build up\n[Drop]\n808 slam, cowbell hit`;
+    const title = `Phonk ${seed}`;
 
     const submitRes = await fetch(`${BASE}/generate`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUNO_API_KEY}`,
+      },
       body: JSON.stringify({
-        prompt: promptWithSeed,
-        customMode: false,
+        customMode: true,
         instrumental: false,
         model: "V3_5",
+        prompt: lyrics,
+        style: style,
+        title: title,
         callBackUrl: "https://example.com/no-op",
       }),
     });
 
-    const submitText = await submitRes.text();
-    let submitJson: any = {};
-    try { submitJson = JSON.parse(submitText); } catch { /* ignore */ }
-    console.log("sunoapi submit:", submitRes.status, submitText.slice(0, 500));
+    const submitJson = await submitRes.json();
+    console.log("sunoapi submit:", submitRes.status, JSON.stringify(submitJson).slice(0, 300));
 
     if (!submitRes.ok) {
       return new Response(
-        JSON.stringify({ error: "sunoapi submit failed", status: submitRes.status, detail: submitJson || submitText }),
+        JSON.stringify({ error: "sunoapi submit failed", detail: submitJson }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const taskId =
-      submitJson?.data?.taskId ||
-      submitJson?.data?.task_id ||
-      submitJson?.taskId;
+    const taskId = submitJson?.data?.taskId || submitJson?.taskId;
 
     if (!taskId) {
       return new Response(
-        JSON.stringify({ error: "No taskId in submit response", detail: submitJson }),
+        JSON.stringify({ error: "No taskId returned", detail: submitJson }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const maxAttempts = 60;
-    const intervalMs = 3000;
-    let audioUrl: string | null = null;
-    let duration: number = length;
-    let title = body.title || "PhonkVibe Track";
-
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise((r) => setTimeout(r, intervalMs));
+    // Poll for result
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 3000));
       const pollRes = await fetch(
-        `${BASE}/generate/record-info?taskId=${encodeURIComponent(taskId)}`,
-        { method: "GET", headers: authHeaders() },
+        `${BASE}/generate/record-info?taskId=${taskId}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${SUNO_API_KEY}`,
+          },
+        },
       );
-      const pollText = await pollRes.text();
-      let pollJson: any = {};
-      try { pollJson = JSON.parse(pollText); } catch { /* ignore */ }
-
+      const pollJson = await pollRes.json();
       const data = pollJson?.data ?? {};
-      const status: string = (data?.status || "").toString().toUpperCase();
-      const tracks =
-        data?.response?.sunoData ||
-        data?.response?.data ||
-        data?.sunoData ||
-        [];
+      const status = (data?.status || "").toUpperCase();
+      const tracks = data?.response?.sunoData || data?.sunoData || [];
       const first = Array.isArray(tracks) ? tracks[0] : null;
+      const audioUrl = first?.audioUrl || first?.audio_url;
 
-      const candidate =
-        first?.audioUrl ||
-        first?.audio_url ||
-        first?.streamAudioUrl ||
-        first?.stream_audio_url;
+      console.log(`poll ${i + 1} status=${status} hasAudio=${!!audioUrl}`);
 
-      if (candidate) {
-        audioUrl = candidate;
-        duration = Number(first?.duration) || length;
-        title = first?.title || title;
-        if (
-          status === "SUCCESS" ||
-          status === "FIRST_SUCCESS" ||
-          status === "TEXT_SUCCESS" ||
-          status === "COMPLETE"
-        ) {
-          break;
-        }
-      }
-
-      if (
-        status === "CREATE_TASK_FAILED" ||
-        status === "GENERATE_AUDIO_FAILED" ||
-        status === "CALLBACK_EXCEPTION" ||
-        status === "SENSITIVE_WORD_ERROR" ||
-        status === "FAILED" ||
-        status === "ERROR"
-      ) {
+      if (audioUrl && (status === "SUCCESS" || status === "FIRST_SUCCESS" || status === "COMPLETE")) {
         return new Response(
-          JSON.stringify({ error: "sunoapi generation failed", status, detail: pollJson }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({
+            audioUrl,
+            duration: Number(first?.duration) || length,
+            title: first?.title || title,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
-      console.log(`sunoapi poll ${i + 1}/${maxAttempts} status=${status} hasAudio=${!!candidate}`);
-    }
-
-    if (!audioUrl) {
-      return new Response(
-        JSON.stringify({ error: "Timed out waiting for sunoapi generation" }),
-        { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      if (status.includes("FAIL") || status.includes("ERROR")) {
+        return new Response(
+          JSON.stringify({ error: "Generation failed", status, detail: pollJson }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     return new Response(
-      JSON.stringify({ audioUrl, duration, title }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ error: "Timed out waiting for generation" }),
+      { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (err: any) {
+
+  } catch (err) {
     console.error("generate-suno error:", err);
     return new Response(
       JSON.stringify({ error: String(err?.message || err) }),
