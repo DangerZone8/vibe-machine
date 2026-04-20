@@ -45,7 +45,9 @@ Deno.serve(async (req) => {
 
     const length = Math.min(Math.max(Number(body.length) || 90, 30), 180);
     const uniqueSeed = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-    const promptWithSeed = `${body.prompt} Unique seed: ${uniqueSeed}`.slice(0, 490);
+    // sunoapi.org enforces 500 char limit in non-custom mode. Truncate to 400 to be safe.
+    const basePrompt = `${body.prompt} Unique seed: ${uniqueSeed}`;
+    const promptWithSeed = basePrompt.length > 400 ? basePrompt.slice(0, 400) : basePrompt;
 
     const submitRes = await fetch(`${BASE}/generate`, {
       method: "POST",
