@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     const length = Math.min(Math.max(Number(body.length) || 90, 30), 180);
     const uniqueSeed = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-    const promptWithSeed = `${body.prompt} [UniqueID:${uniqueSeed}]`;
+    const promptWithSeed = `${body.prompt} Unique seed: ${uniqueSeed}`.slice(0, 490);
 
     const submitRes = await fetch(`${BASE}/generate`, {
       method: "POST",
