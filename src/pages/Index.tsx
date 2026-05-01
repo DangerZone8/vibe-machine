@@ -41,7 +41,7 @@ const HomePage = () => {
     });
 
     if (!apiResult) {
-      toast.error("Generation failed — check your SUNO_API_KEY in Lovable Cloud secrets");
+      toast.error("Generation failed — check HUGGINGFACE_API_KEY in Lovable Cloud secrets");
     }
 
     const demoMatch = DEMO_TRACKS.find((t) => t.mood === mood) || DEMO_TRACKS[0];
