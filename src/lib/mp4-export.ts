@@ -8,7 +8,7 @@ export async function exportBlackVideoWithAudio(
   durationSec: number,
   title: string = "PhonkVibe",
   mood: string = "",
-): Promise<void>
+): Promise<void> {
   // Fetch audio as a blob so we can decode it & control playback length precisely.
   const audioRes = await fetch(audioUrl, { mode: "cors" });
   if (!audioRes.ok) throw new Error(`Failed to fetch audio: ${audioRes.status}`);
