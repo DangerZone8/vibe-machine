@@ -252,7 +252,7 @@ const AudioPlayer = ({ track, onRegenerate, onSave, compact = false }: AudioPlay
             try {
               setExportingMp4(true);
               toast.info("Exporting MP4 — this plays the full track once. Don't close the tab.");
-              await exportBlackVideoWithAudio(track.audioUrl, track.title, duration);
+              await exportBlackVideoWithAudio(track.audioUrl, track.title, duration, track.title, track.mood);
               toast.success("MP4 downloaded!");
             } catch (e: any) {
               console.error("MP4 export failed:", e);
