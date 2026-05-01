@@ -111,6 +111,8 @@ export async function generateTrackFromAPI(
     const { data, error } = await supabase.functions.invoke("generate-suno", {
       body: {
         prompt,
+        mood: params.mood,
+        customPrompt: params.customPrompt,
         length: exactLength,
         vocalType: params.vocalType,
         musicType: params.musicType,
