@@ -20,15 +20,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const length = Math.min(Math.max(Number(body.length) || 90, 30), 180);
-    const vocal = body.vocalType === "female" ? "Female" : "Male";
-    const mood = body.prompt || "hype aggressive phonk";
-    const seed = Math.random().toString(36).substring(2, 8);
-
-    const style = `heavy phonk, distorted 808 bass, cowbell melody, Memphis rap, dark lo-fi, ${mood}`.slice(0, 120);
-    const lyrics = `[Verse]\n${vocal} voice, gritty words, phonk energy\n[Hook]\nHeavy drops, fake drops, build up\n[Drop]\n808 slam, cowbell hit`;
-    const title = `Phonk ${seed}`;
+    const rawPrompt = String(body.prompt || "hype aggressive phonk track");
+    const seed = Math.random().toString(36).substring(2, 6);
+    const promptWithSeed = `${rawPrompt} [seed:${seed}]`.slice(0, 490);
 
     const submitRes = await fetch(`${BASE}/generate`, {
       method: "POST",
@@ -37,20 +33,18 @@ Deno.serve(async (req) => {
         "Authorization": `Bearer ${SUNO_API_KEY}`,
       },
       body: JSON.stringify({
-        customMode: true,
+        customMode: false,
         instrumental: false,
         model: "V3_5",
-        prompt: lyrics,
-        style: style,
-        title: title,
+        prompt: promptWithSeed,
         callBackUrl: "https://example.com/no-op",
       }),
     });
 
-    const submitJson = await submitRes.json();
-    console.log("sunoapi submit:", submitRes.status, JSON.stringify(submitJson).slice(0, 300));
+    const submitJson = await submitRes.json().catch(() => ({}));
+    console.log("sunoapi submit:", submitRes.status, JSON.stringify(submitJson).slice(0, 400));
 
-    if (!submitRes.ok) {
+    if (!submitRes.ok || (submitJson?.code && submitJson.code !== 200)) {
       return new Response(
         JSON.stringify({ error: "sunoapi submit failed", detail: submitJson }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -58,7 +52,6 @@ Deno.serve(async (req) => {
     }
 
     const taskId = submitJson?.data?.taskId || submitJson?.taskId;
-
     if (!taskId) {
       return new Response(
         JSON.stringify({ error: "No taskId returned", detail: submitJson }),
@@ -66,20 +59,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Poll for result
     for (let i = 0; i < 60; i++) {
       await new Promise((r) => setTimeout(r, 3000));
       const pollRes = await fetch(
         `${BASE}/generate/record-info?taskId=${taskId}`,
-        {
-          headers: {
-            "Authorization": `Bearer ${SUNO_API_KEY}`,
-          },
-        },
+        { headers: { "Authorization": `Bearer ${SUNO_API_KEY}` } },
       );
-      const pollJson = await pollRes.json();
+      const pollJson = await pollRes.json().catch(() => ({}));
       const data = pollJson?.data ?? {};
-      const status = (data?.status || "").toUpperCase();
+      const status = String(data?.status || "").toUpperCase();
       const tracks = data?.response?.sunoData || data?.sunoData || [];
       const first = Array.isArray(tracks) ? tracks[0] : null;
       const audioUrl = first?.audioUrl || first?.audio_url;
@@ -91,7 +79,7 @@ Deno.serve(async (req) => {
           JSON.stringify({
             audioUrl,
             duration: Number(first?.duration) || length,
-            title: first?.title || title,
+            title: first?.title || `Phonk ${seed}`,
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
@@ -109,8 +97,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "Timed out waiting for generation" }),
       { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
-  } catch (err) {
+  } catch (err: any) {
     console.error("generate-suno error:", err);
     return new Response(
       JSON.stringify({ error: String(err?.message || err) }),

@@ -10,6 +10,7 @@ import MusicTypeToggle from "@/components/MusicTypeToggle";
 import AudioPlayer from "@/components/AudioPlayer";
 import GeneratingOverlay from "@/components/GeneratingOverlay";
 import TrendingNow from "@/components/TrendingNow";
+import TrendingTracks from "@/components/TrendingTracks";
 import { generateTitle, generateTrackFromAPI, type GeneratedTrack, type MusicType } from "@/lib/music-api";
 import { useTrendingTags } from "@/hooks/use-trending-tags";
 import { DEMO_TRACKS } from "@/lib/demo-tracks";
@@ -99,7 +100,10 @@ const HomePage = () => {
       {/* Generator */}
       <section className="container mx-auto px-4 space-y-8 relative z-10 -mt-4">
 
-        {/* Trending Now */}
+        {/* Trending Tracks (Last.fm, daily) */}
+        <TrendingTracks />
+
+        {/* Trending Now (mood tags) */}
         {(trendingLoading || allTags.length > 0) && (
           <TrendingNow tags={trendingTags} loading={trendingLoading} />
         )}
