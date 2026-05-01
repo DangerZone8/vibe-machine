@@ -6,7 +6,9 @@ export async function exportBlackVideoWithAudio(
   audioUrl: string,
   filename: string,
   durationSec: number,
-): Promise<void> {
+  title: string = "PhonkVibe",
+  mood: string = "",
+): Promise<void>
   // Fetch audio as a blob so we can decode it & control playback length precisely.
   const audioRes = await fetch(audioUrl, { mode: "cors" });
   if (!audioRes.ok) throw new Error(`Failed to fetch audio: ${audioRes.status}`);
@@ -28,12 +30,27 @@ export async function exportBlackVideoWithAudio(
   canvas.width = 720;
   canvas.height = 720;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#a855f7";
-  ctx.font = "bold 28px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("PhonkVibe", canvas.width / 2, canvas.height / 2);
+  const drawFrame = () => {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.textAlign = "center";
+    // Title
+    ctx.fillStyle = "#a855f7";
+    ctx.font = "bold 44px sans-serif";
+    const safeTitle = (title || "PhonkVibe").slice(0, 40);
+    ctx.fillText(safeTitle, canvas.width / 2, canvas.height / 2 - 10);
+    // Mood
+    if (mood) {
+      ctx.fillStyle = "#e5e5e5";
+      ctx.font = "500 24px sans-serif";
+      ctx.fillText(`#${mood}`, canvas.width / 2, canvas.height / 2 + 40);
+    }
+    // Footer
+    ctx.fillStyle = "#666";
+    ctx.font = "500 18px sans-serif";
+    ctx.fillText("PhonkVibe", canvas.width / 2, canvas.height - 40);
+  };
+  drawFrame();
 
   const videoStream = (canvas as HTMLCanvasElement).captureStream(1); // 1 fps – tiny
 
