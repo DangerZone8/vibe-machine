@@ -6,8 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const LASTFM_API_KEY = Deno.env.get("LASTFM_API_KEY") ?? "1b9f6c0c1b9f6c0c1b9f6c0c1b9f6c0c";
+const LASTFM_API_KEY = Deno.env.get("LASTFM_API_KEY");
 const LASTFM_BASE = "https://ws.audioscrobbler.com/2.0/";
+const CRON_SECRET = Deno.env.get("CRON_SECRET");
 
 const TAG_TO_MOOD: Record<string, string> = {
   "hip-hop": "hype",
@@ -106,6 +107,21 @@ const GENRE_SEEDS = [
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  // Require shared cron secret to prevent public abuse of service-role mutations
+  if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  if (!LASTFM_API_KEY) {
+    return new Response(
+      JSON.stringify({ error: "LASTFM_API_KEY not configured" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   try {
