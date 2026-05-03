@@ -6,8 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const LASTFM_API_KEY = Deno.env.get("LASTFM_API_KEY") ?? "1b9f6c0c1b9f6c0c1b9f6c0c1b9f6c0c";
+const LASTFM_API_KEY = Deno.env.get("LASTFM_API_KEY");
 const LASTFM_BASE = "https://ws.audioscrobbler.com/2.0/";
+const CRON_SECRET = Deno.env.get("CRON_SECRET");
 
 const TAG_TO_MOOD: Record<string, string> = {
   "hip-hop": "hype",
