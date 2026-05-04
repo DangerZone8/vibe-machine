@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const HF_API_KEY = Deno.env.get("HUGGINGFACE_API_KEY");
 const HF_URL =
-  "https://api-inference.huggingface.co/models/facebook/musicgen-melody";
+  "https://router.huggingface.co/hf-inference/models/facebook/musicgen-melody";
 
 function buildPrompt(mood: string, vocalType: string, custom?: string): string {
   const vocals = vocalType === "female" ? "female" : "male";
