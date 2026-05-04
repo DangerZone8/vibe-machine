@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+// Hugging Face MusicGen generation
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
